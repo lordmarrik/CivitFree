@@ -6,8 +6,8 @@ Local-first personal image generation UI prototype for a CivitAI-inspired mobile
 
 1. Read `CLAUDE.md` for the current project status.
 2. Read `CODEX_TASK.md` for the next implementation task.
-3. Read `uploads/civitfree-claude-design-instructions-3.md` for the locked design/interaction spec.
-4. Use the exported prototypes (`CivitFree Personal.html`, `CivitFree.html`) and screenshots in `uploads/` as visual references.
+3. Read `Uploads/civitfree-claude-design-instructions-3.md` for the locked design/interaction spec.
+4. Use the exported prototypes (`CivitFree Personal.html`, `CivitFree.html`) and screenshots in `Uploads/` as visual references.
 
 ## Key files
 
