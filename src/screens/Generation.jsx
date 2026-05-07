@@ -22,20 +22,18 @@ export function VariantPersonalClassic({
   onNegativePromptChange,
   loras = [],
   onAddLora,
-  onUpdateLoraStrength,
+  onUpdateLora,
   onRemoveLora,
   model,
   onModelChange,
   settings,
   onSettingsChange,
+  pendingSeed,
+  consumePendingSeed,
 }) {
   const [modality, setModality] = React.useState('image');
   const [tab, setTab] = React.useState('t2i');
-  const [aspect, setAspect] = React.useState('2:3');
   const [seedMode, setSeedMode] = React.useState('Custom');
-  const [cfg, setCfg] = React.useState(3);
-  const [steps, setSteps] = React.useState(40);
-  const [sampler, setSampler] = React.useState('Euler a');
   const [clip, setClip] = React.useState(2);
   const [qty, setQty] = React.useState(2);
 
@@ -43,6 +41,20 @@ export function VariantPersonalClassic({
   const [modelPickerOpen, setModelPickerOpen] = React.useState(false);
   const [loraPickerOpen, setLoraPickerOpen] = React.useState(false);
   const [backendOpen, setBackendOpen] = React.useState(false);
+
+  // Generation params live in settings (single source of truth shared
+  // with the Settings drawer); these helpers read/write through props.
+  const cfg = settings?.cfg ?? 7;
+  const steps = settings?.steps ?? 30;
+  const sampler = settings?.sampler ?? 'Euler a';
+  const setCfg = (v) => onSettingsChange && onSettingsChange({ cfg: v });
+  const setSteps = (v) => onSettingsChange && onSettingsChange({ steps: v });
+  const setSampler = (v) => onSettingsChange && onSettingsChange({ sampler: v });
+
+  const ASPECT_TO_SIZE = { '2:3': '832×1216', '1:1': '1024×1024', '3:2': '1216×832' };
+  const SIZE_TO_ASPECT = Object.fromEntries(Object.entries(ASPECT_TO_SIZE).map(([k, v]) => [v, k]));
+  const aspect = SIZE_TO_ASPECT[settings?.size] ?? null;
+  const setAspect = (a) => onSettingsChange && onSettingsChange({ size: ASPECT_TO_SIZE[a] });
 
   const CFG_PRESETS = { Creative: 3, Balanced: 7, Precise: 12 };
   const STEPS_PRESETS = { Fast: 20, Balanced: 30, High: 50 };
@@ -74,8 +86,19 @@ export function VariantPersonalClassic({
       setGenError('Type a prompt before generating.');
       return;
     }
+    const missingFilename = (loras || []).find(l => !l.filename || !l.filename.trim());
+    if (missingFilename) {
+      setGenError(
+        `LoRA "${missingFilename.name}" needs its real ComfyUI filename ` +
+        `(in the textbox under the strength slider). Or remove it.`
+      );
+      return;
+    }
 
-    const seed = randomSeed();
+    const claimedSeed = consumePendingSeed && consumePendingSeed();
+    const seed = (typeof claimedSeed === 'number' && Number.isFinite(claimedSeed))
+      ? claimedSeed
+      : randomSeed();
     const workflow = buildTextToImageWorkflow({
       checkpointFilename: checkpoint,
       prompt,
@@ -86,8 +109,9 @@ export function VariantPersonalClassic({
       steps,
       seed,
       size: settings?.size ?? '832×1216',
+      batchSize: qty,
       loras: (loras || []).map(l => ({
-        filename: l.filename || l.name,
+        filename: l.filename.trim(),
         strength: l.strength ?? 0.8,
       })),
     });
@@ -101,10 +125,11 @@ export function VariantPersonalClassic({
       if (images.length === 0) {
         throw new Error('Generation finished but ComfyUI returned no images.');
       }
-      const first = images[0];
       setLatestResult({
-        url: comfyImageUrl(baseUrl, first),
-        filename: first.filename,
+        images: images.map(img => ({
+          url: comfyImageUrl(baseUrl, img),
+          filename: img.filename,
+        })),
         seed,
         prompt,
         promptId,
@@ -136,9 +161,17 @@ export function VariantPersonalClassic({
         {latestResult && (
           <div className="cf-section" style={{paddingTop: 12, paddingBottom: 0}}>
             <div className="cf-result-card">
-              <img src={latestResult.url} alt={`Result · seed ${latestResult.seed}`}/>
+              <div className={latestResult.images.length > 1 ? 'images grid' : 'images'}>
+                {latestResult.images.map((img, i) => (
+                  <img key={img.filename + i} src={img.url} alt={`Result ${i + 1} · seed ${latestResult.seed}`}/>
+                ))}
+              </div>
               <div className="meta">
-                <span className="label">Latest result</span>
+                <span className="label">
+                  {latestResult.images.length > 1
+                    ? `Latest results · ${latestResult.images.length} images`
+                    : 'Latest result'}
+                </span>
                 <span className="seed mono">seed {latestResult.seed}</span>
                 <button onClick={() => setLatestResult(null)} className="dismiss" aria-label="Dismiss result">
                   <Ic.X size={14}/>
@@ -299,8 +332,18 @@ export function VariantPersonalClassic({
                     <SliderRow
                       value={l.strength}
                       min={0} max={1} step={0.05}
-                      onChange={s => onUpdateLoraStrength && onUpdateLoraStrength(l.id, s)}
+                      onChange={s => onUpdateLora && onUpdateLora(l.id, { strength: s })}
                       displayValue={l.strength.toFixed(2)}
+                    />
+                    <input
+                      className="cf-lora-filename"
+                      value={l.filename ?? ''}
+                      onChange={e => onUpdateLora && onUpdateLora(l.id, { filename: e.target.value })}
+                      placeholder="filename, e.g. uggu_bang_xl.safetensors"
+                      spellCheck={false}
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      aria-label={`Filename for ${l.name}`}
                     />
                   </div>
                 ))}

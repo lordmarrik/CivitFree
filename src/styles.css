@@ -99,39 +99,10 @@ input, textarea, select { font: inherit; color: inherit; }
 
 /* On real phones / narrow screens, drop the device-frame mockup styling
    and fill the whole screen edge-to-edge. Keeps the framed look on
-   desktop, where the app is being viewed as a design reference. */
-@media (max-width: 767px) {
-  .app-shell {
-    padding: 0;
-    gap: 0;
-    min-height: 100vh;
-    min-height: 100dvh;
-  }
-  .app-shell .intro-panel,
-  .app-shell .screen-tabs {
-    display: none;
-  }
-  .cf-frame {
-    width: 100vw;
-    height: 100vh;
-    height: 100dvh;
-    border-radius: 0;
-    box-shadow: none;
-    font-size: 15px;
-  }
-  /* Respect iOS notch / dynamic island and home indicator. */
-  .cf-statusbar {
-    padding-top: env(safe-area-inset-top);
-    height: calc(36px + env(safe-area-inset-top));
-  }
-  .cf-dock {
-    padding-bottom: calc(16px + env(safe-area-inset-bottom));
-  }
-  .cf-topbar {
-    padding-left: max(14px, env(safe-area-inset-left));
-    padding-right: max(14px, env(safe-area-inset-right));
-  }
-}
+   desktop, where the app is being viewed as a design reference.
+   Defined late in the file so this @media block actually overrides the
+   base .cf-statusbar / .cf-topbar / .cf-dock declarations above. */
+
 
 .cf-statusbar {
   height: 36px; padding: 0 18px 0 22px;
@@ -657,10 +628,17 @@ input, textarea, select { font: inherit; color: inherit; }
   overflow: hidden;
   box-shadow: 0 0 0 1px oklch(0.50 0.18 340 / .15);
 }
-.cf-result-card img {
+.cf-result-card .images img {
   display: block; width: 100%; height: auto;
   background: var(--panel-3);
   max-height: 400px; object-fit: contain;
+}
+.cf-result-card .images.grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+  background: var(--line);
+}
+.cf-result-card .images.grid img {
+  max-height: 240px;
 }
 .cf-result-card .meta {
   display: flex; align-items: center; gap: 10px;
@@ -709,3 +687,44 @@ input, textarea, select { font: inherit; color: inherit; }
   transition: color .12s, background .12s;
 }
 .cf-lora-row .remove:hover { color: var(--bad); background: var(--panel-3); }
+.cf-lora-filename {
+  width: 100%; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px;
+  color: var(--text); font-size: 12px; font-family: var(--font-mono);
+}
+.cf-lora-filename:focus { outline: none; border-color: var(--accent-line); }
+.cf-lora-filename::placeholder { color: var(--text-mute); }
+
+/* Responsive (must come after the base .cf-statusbar / .cf-topbar /
+   .cf-dock rules so the safe-area-inset overrides actually apply). */
+@media (max-width: 767px) {
+  .app-shell {
+    padding: 0;
+    gap: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  .app-shell .intro-panel,
+  .app-shell .screen-tabs {
+    display: none;
+  }
+  .cf-frame {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+    font-size: 15px;
+  }
+  .cf-statusbar {
+    padding-top: env(safe-area-inset-top);
+    height: calc(36px + env(safe-area-inset-top));
+  }
+  .cf-dock {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+  .cf-topbar {
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+  }
+}
