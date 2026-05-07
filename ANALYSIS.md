@@ -8,32 +8,37 @@ product decisions live in `CLAUDE.md` and are unchanged here.
 
 ## 1. Summary
 
-The repo is a hybrid of three layers that do not yet share code:
+The runnable Vite + React app at `src/` now imports the personal components as
+ES modules — the orphan `.jsx` files in the repo root were ported into
+`src/screens/`, `src/components/`, and `src/shared/`, and the HTML prototype's CSS
+was lifted into `src/styles.css`. The HTML prototype (`CivitFree Personal.html`)
+still loads its own copy of the orphan files via Babel-from-CDN as the visual
+source of truth, per `CLAUDE.md`.
 
-1. **Canonical visual prototype** — `CivitFree Personal.html`, a Babel-from-CDN single-page
-   app that loads the 14 personal `.jsx` files in the repo root via global `window.*`
-   exports. This is the spec-true UI.
-2. **Runnable Vite + React scaffold** — `src/main.jsx` (237 lines), a from-scratch
-   reimplementation of the four screens with low-fidelity inline components. Builds
-   and runs via `npm run dev` / `npm run build`.
-3. **Orphaned root `.jsx` files** — 760 lines of high-fidelity personal components
-   (`variant-personal-*.jsx`, `drawer.jsx`, `model-picker.jsx`, etc.) that have **no
-   ES module syntax** and are not imported by `src/`.
+The two layers no longer compete:
 
-The single highest-value next task is to **port the orphan personal components into
-`src/` as ES modules** so the runnable scaffold inherits the prototype's fidelity
-instead of competing with it. Everything else in the backlog is downstream of that.
+1. **Canonical visual prototype** — `CivitFree Personal.html` plus the repo-root
+   `.jsx` files (Babel-CDN globals). Untouched by this audit.
+2. **Runnable Vite + React app** — `src/main.jsx` composes
+   `VariantPersonalClassic` / `Queue` / `Feed` / `Inpaint` / `OnboardingFlow` from
+   the new `src/screens/` modules.
+
+The next highest-value task is **#2 below**: implementing real ComfyUI transport
+in `src/services/comfyClient.js` so the UI can actually generate.
 
 ## 2. Current state — what runs
 
 | Component | Path | Status |
 |---|---|---|
 | Vite scaffold | `package.json`, `index.html` | ✅ React 18.3 + Vite 5.4, scripts `dev` / `build` / `preview` |
-| App entry | `src/main.jsx` | ✅ Renders four screens, drawer, sheets, sticky dock |
-| Styles | `src/styles.css` | ✅ Dark mobile UI, CSS variables |
+| App entry | `src/main.jsx` | ✅ Composes ported screens A/B/C/D + onboarding overlay |
+| Shared layer | `src/shared/{icons,Shell,controls,mockImages}.jsx` | ✅ Ported from root `.jsx` as ES modules |
+| Components | `src/components/{BottomSheet,Drawer,ModelPicker,SortFilter}.jsx` | ✅ Ported from root `.jsx` as ES modules |
+| Screens | `src/screens/{Generation,QueueAndFeed,Inpaint,Onboarding}.jsx` | ✅ Ported from root `variant-personal-*.jsx` as ES modules |
+| Styles | `src/styles.css` | ✅ Lifted from `CivitFree Personal.html`, plus `.app-shell` / `.intro-panel` / `.screen-tabs` chrome |
 | ComfyUI client boundary | `src/services/comfyClient.js` | ⚠️ Six functions (`testConnection`, `listCheckpoints`, `listLoras`, `submitWorkflow`, `pollQueueHistory`, `downloadGeneratedImage`) all throw `is a ComfyUI stub` |
 | Backend profiles | `src/services/comfyClient.js` | ✅ `defaultBackendProfile` (Steubenville RTX 3080) and `cloudFallbackProfile` exported |
-| Canonical HTML prototype | `CivitFree Personal.html` | ✅ Loads via Babel-from-CDN; visual source of truth |
+| Canonical HTML prototype | `CivitFree Personal.html` | ✅ Untouched; still loads via Babel-from-CDN |
 
 ## 3. Gap vs `CLAUDE.md` "Still to do"
 
@@ -42,12 +47,12 @@ instead of competing with it. Everything else in the backlog is downstream of th
 | Claim in CLAUDE.md | Actual state |
 |---|---|
 | Convert the static prototype into a runnable Vite + React app scaffold | ✅ **Done** — `src/main.jsx` builds via Vite |
-| Move/re-export personal components into `src/` with proper imports | ❌ **Not done** — `src/main.jsx` is a parallel reimplementation; root `.jsx` files remain orphaned and lack `import`/`export` syntax |
+| Move/re-export personal components into `src/` with proper imports | ✅ **Done** — ported into `src/shared/`, `src/components/`, `src/screens/` |
 | Add a typed/stubbed ComfyUI client boundary | ✅ **Done** — `src/services/comfyClient.js` with JSDoc `BackendProfile` typedef |
 | Implement real ComfyUI workflow graph mutation | ❌ **Blocked** on the stubs in `src/services/comfyClient.js` |
-| Wire remaining placeholder buttons to app state | ⚠️ **Partial** — drawer, model/LoRA pickers, action sheet, backend switcher all wired; run metadata + fullscreen image viewer still missing |
-| Upgrade the LoRA loaded-state section with thumbnails, strength sliders, remove buttons | ❌ **Not started** — `src/main.jsx` LoRA sheet only lists names |
-| Real pagination/virtual scrolling and cross-page selection persistence | ❌ **Not started** — feed uses `mockRuns.concat(mockRuns)` (six tiles) |
+| Wire remaining placeholder buttons to app state | ⚠️ **Partial** — drawer, model/LoRA pickers, action sheet, backend switcher, sort/filter all wired; image action sheet's _Send to inpaint_ now navigates to Screen D, but run metadata and fullscreen image viewer are still missing |
+| Upgrade the LoRA loaded-state section with thumbnails, strength sliders, remove buttons | ❌ **Not started** — current Generation screen shows _None loaded · 312 available locally_ stub copy |
+| Real pagination/virtual scrolling and cross-page selection persistence | ❌ **Not started** — feed renders 12 mock tiles |
 
 ## 4. Locked-spec compliance check
 
@@ -55,44 +60,40 @@ Verified against `src/main.jsx` (the runnable scaffold):
 
 | Locked decision | Source line | Status |
 |---|---|---|
-| Enter inserts newline, never fires Generate | `src/main.jsx:142` (textarea, no submit handler) | ✅ |
-| QTY full-width, supports 1–9999 | `src/main.jsx:149`, `src/main.jsx:190-198` (Stepper bounds) | ✅ |
-| Screen B / Screen C have no Generate Again bar | `src/main.jsx:154-164` | ✅ |
-| Hamburger opens side drawer (CF logo entry) | `src/main.jsx:116`, `src/main.jsx:209-219` | ✅ |
-| No batch delete, no thumbs up/down, no X button | `src/main.jsx` action sheet `src/main.jsx:84-89` | ✅ |
-| Wand is the single "do something to this image" entry point | only ⋮ click on tile is wired (`src/main.jsx:187`); no separate wand entry | ⚠️ partial |
-| Bottom sheet menu (⋮ and wand on thumbnails) | `src/main.jsx:84-89` (single menu, only ⋮ wired) | ⚠️ partial |
-| Cloud GPU fallback supported alongside local profiles | `src/services/comfyClient.js` `cloudFallbackProfile` | ✅ |
+| Enter inserts newline, never fires Generate | `src/screens/Generation.jsx` (textarea, no submit handler) | ✅ |
+| QTY full-width, supports 1–9999 | `src/shared/Shell.jsx` (Dock personal QTY row) | ✅ |
+| Screen B / Screen C have no Generate Again bar | `src/screens/QueueAndFeed.jsx` (no Dock rendered) | ✅ |
+| Hamburger opens side drawer (CF logo entry) | `src/shared/Shell.jsx` (TopBar `cf-logo onClick={onMenu}`) | ✅ |
+| No batch delete, no thumbs up/down, no X button | `src/components/BottomSheet.jsx` ImageActionSheet | ✅ |
+| Wand is the single "do something to this image" entry point | `src/screens/QueueAndFeed.jsx` FeedCard wand button + ⋮ both open ImageActionSheet | ✅ |
+| Bottom sheet menu (⋮ and wand on thumbnails) | wired in FeedCard | ✅ |
+| Cloud GPU fallback supported alongside local profiles | `src/services/comfyClient.js` `cloudFallbackProfile`; `src/components/SortFilter.jsx` BackendSwitcher | ✅ |
 
-The orphan prototype files (`variant-personal-classic.jsx` etc.) implement the wand
-entry and richer interaction set; that fidelity is lost in the scaffold until a port
-happens.
+## 5. Personal `.jsx` mapping (root → `src/`)
 
-## 5. Orphaned root `.jsx` inventory
+The root `.jsx` files are kept on disk because the canonical HTML prototype
+(`CivitFree Personal.html`) still loads them via Babel-from-CDN. Each one was
+ported into `src/` as ES modules consumed by the Vite app:
 
-None of the files below have `import` or `export` statements; they are Babel-CDN
-globals consumed by `CivitFree Personal.html` and `CivitFree.html`.
+| Root file (Babel-CDN globals, kept) | `src/` ES module (used by Vite app) |
+|---|---|
+| `variant-personal-classic.jsx` | `src/screens/Generation.jsx` |
+| `variant-personal-gallery.jsx` | `src/screens/QueueAndFeed.jsx` |
+| `variant-personal-inpaint.jsx` | `src/screens/Inpaint.jsx` |
+| `onboarding.jsx` | `src/screens/Onboarding.jsx` |
+| `drawer.jsx` | `src/components/Drawer.jsx` |
+| `model-picker.jsx` | `src/components/ModelPicker.jsx` (`ModelPicker`, `LoraPicker`) |
+| `sort-filter.jsx` | `src/components/SortFilter.jsx` |
+| `bottom-sheet.jsx` | `src/components/BottomSheet.jsx` |
+| `shell.jsx` | `src/shared/Shell.jsx` |
+| `controls.jsx` | `src/shared/controls.jsx` |
+| `icons.jsx` | `src/shared/icons.jsx` (`Ic`) |
+| `personal-mock-images.jsx` | `src/shared/mockImages.jsx` |
 
-### Personal — recommended for porting into `src/`
-
-| File | LOC | Recommended target |
-|---|---|---|
-| `variant-personal-classic.jsx` | 227 | `src/screens/GenerationScreen.jsx` |
-| `variant-personal-gallery.jsx` | 235 | `src/screens/QueueScreen.jsx` + `src/screens/FeedScreen.jsx` |
-| `variant-personal-inpaint.jsx` | 298 | `src/screens/EditorScreen.jsx` |
-| `drawer.jsx` | 378 | `src/components/Drawer.jsx` |
-| `model-picker.jsx` | 403 | `src/components/ModelPicker.jsx` + `LoraPicker.jsx` |
-| `sort-filter.jsx` | 123 | `src/components/SortFilterSheet.jsx` |
-| `bottom-sheet.jsx` | 67 | `src/components/BottomSheet.jsx` |
-| `onboarding.jsx` | 296 | `src/screens/OnboardingScreen.jsx` |
-| `shell.jsx` | 153 | `src/shared/Shell.jsx` (StatusBar / TopBar / Dock) |
-| `controls.jsx` | 135 | `src/shared/controls.jsx` |
-| `icons.jsx` | 296 | `src/shared/icons.jsx` |
-| `personal-mock-images.jsx` | 36 | `src/shared/mockImages.jsx` (`FakeImg`, `PALETTES`) |
-
-Porting cost ≈ 760 lines of personal screens + ≈ 1,887 lines of shared/components,
-mostly mechanical: add `import React from 'react'`, replace `window.*` lookups with
-`import` statements, and remove the `Ic.*` global namespace in favor of named exports.
+Two copies exist by design: the HTML prototype keeps its self-contained Babel
+build for visual reference, and the Vite app uses the new modules. Future spec
+changes should land in both — or, if the HTML prototype is retired, in `src/`
+only.
 
 ### Legacy non-personal — keep as reference, do **not** port
 
@@ -133,29 +134,24 @@ React plugin), ESLint flat config with the React plugin, and a CI job that runs
 
 Ordered by **unblock value**: each item assumes the previous is done.
 
-1. **Port orphan personal `.jsx` files into `src/` as ES modules.** Replace the inline
-   reimplementation in `src/main.jsx` with imports from `src/screens/`,
-   `src/components/`, and `src/shared/`. This single step recovers the prototype's
-   fidelity (wand entry, run metadata, sheet contents) and unblocks every UI feature
-   below.
-2. **Wire the mock image source.** Use `personal-mock-images.jsx` (`FakeImg`, `PALETTES`)
-   as `src/shared/mockImages.jsx` so feed/queue tiles match the prototype look. Needed
-   before any tile-based feature feels real.
-3. **Implement real ComfyUI transport.** Replace the six `notImplemented` stubs in
+1. ~~**Port orphan personal `.jsx` files into `src/` as ES modules.**~~ ✅ Done in this branch.
+2. **Implement real ComfyUI transport.** Replace the six `notImplemented` stubs in
    `src/services/comfyClient.js` with `fetch` calls against `${baseUrl}` for
    `/prompt`, `/queue`, `/history`, `/view`. Keep the typed boundary intact so UI
-   code stays transport-agnostic.
-4. **Upgrade the LoRA loaded-state UI.** Thumbnails, strength sliders, remove buttons
-   per the screenshot reference `Uploads/Screenshot_20260504_162956_Brave.png`.
-5. **Run metadata + fullscreen image viewer.** Closes the "wire remaining placeholder
-   buttons" item from `CLAUDE.md`. Action sheet's *Send to inpaint* and *Remix* should
-   navigate to Screen D and Screen A respectively with state preserved.
-6. **Pagination / virtual scrolling for the feed**, with cross-page selection
+   code stays transport-agnostic. Wire it from `src/screens/Generation.jsx` (Generate
+   button) and the queue/feed polling loop.
+3. **Upgrade the LoRA loaded-state UI.** Thumbnails, strength sliders, remove buttons
+   per the screenshot reference `Uploads/Screenshot_20260504_162956_Brave.png`. Edit
+   the `cf-add-empty` block in `src/screens/Generation.jsx`.
+4. **Run metadata + fullscreen image viewer.** Closes the "wire remaining placeholder
+   buttons" item from `CLAUDE.md`. The action sheet's _Send to inpaint_ now navigates
+   to Screen D; _Remix_ still needs to populate Screen A's prompt and seed.
+5. **Pagination / virtual scrolling for the feed**, with cross-page selection
    persistence. Last open item from `CLAUDE.md` "Still to do".
-7. **Tooling baseline.** `vite.config.js`, ESLint flat config, GitHub Actions job
-   running `npm run build` on PRs.
+6. **Tooling baseline.** `vite.config.js` with `@vitejs/plugin-react`, ESLint flat
+   config, GitHub Actions job running `npm run build` on PRs.
 
-Items 4–6 can be parallelized after items 1–3 land.
+Items 3–5 can be parallelized after item 2 lands.
 
 ## 8. Files referenced
 
