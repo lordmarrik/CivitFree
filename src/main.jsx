@@ -25,6 +25,7 @@ const DEFAULT_SETTINGS = {
   backendProfile: 'steubenville',
   backendUrl: 'http://192.168.1.42:8188',
   defaultModelName: 'HomoSimile XL v4.0',
+  checkpointFilename: '',
   sampler: 'Euler a',
   scheduler: 'Normal',
   steps: 30,

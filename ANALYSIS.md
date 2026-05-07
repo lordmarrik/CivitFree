@@ -49,7 +49,7 @@ in `src/services/comfyClient.js` so the UI can actually generate.
 | Convert the static prototype into a runnable Vite + React app scaffold | ✅ **Done** — `src/main.jsx` builds via Vite |
 | Move/re-export personal components into `src/` with proper imports | ✅ **Done** — ported into `src/shared/`, `src/components/`, `src/screens/` |
 | Add a typed/stubbed ComfyUI client boundary | ✅ **Done** — `src/services/comfyClient.js` with JSDoc `BackendProfile` typedef |
-| Implement real ComfyUI workflow graph mutation | ❌ **Blocked** on the stubs in `src/services/comfyClient.js` |
+| Implement real ComfyUI workflow graph mutation | ✅ **Done (text → image)** — `src/services/buildWorkflow.js` builds the graph; `src/services/comfyClient.js` submits and polls. img→img / inpaint / upscale graphs are follow-ups. |
 | Wire remaining placeholder buttons to app state | ⚠️ **Partial** — drawer, model/LoRA pickers, action sheet, backend switcher, sort/filter all wired; LoRA picker's _Select_ now adds to the loaded list; image action sheet's _Send to inpaint_ navigates to Screen D with the source seed/palette; _Remix_ copies prompt back to Screen A. Run metadata and fullscreen image viewer are still missing |
 | Upgrade the LoRA loaded-state section with thumbnails, strength sliders, remove buttons | ✅ **Done** — `src/screens/Generation.jsx` renders `.cf-lora-row` per loaded LoRA |
 | Real pagination/virtual scrolling and cross-page selection persistence | ❌ **Not started** — feed renders 12 mock tiles |
@@ -138,12 +138,11 @@ Ordered by **unblock value**: each item assumes the previous is done.
 2. ~~**Upgrade the LoRA loaded-state UI** + **wire cross-screen state** (LoRA picker
    → loaded list, _Send to inpaint_ → Screen D source, _Remix_ → Screen A prompt).~~
    ✅ Done.
-3. **Implement real ComfyUI transport.** Replace the six `notImplemented` stubs in
-   `src/services/comfyClient.js` with `fetch` calls against `${baseUrl}` for
-   `/prompt`, `/queue`, `/history`, `/view`. Keep the typed boundary intact so UI
-   code stays transport-agnostic. Wire it from `src/screens/Generation.jsx` (Generate
-   button) and a queue/feed polling loop. Requires user's ComfyUI server reachable
-   from wherever the dev server runs.
+3. ~~**Implement real ComfyUI transport.**~~ ✅ Done for the Generate flow.
+   Real `fetch` calls against `/prompt`, `/history`, `/view`,
+   `/object_info`, `/system_stats` in `src/services/comfyClient.js`.
+   Generate button on Screen A wired end-to-end. Remaining: feed
+   queue/feed polling loop (replaces hardcoded mock data) — Phase 4.
 4. **Run metadata + fullscreen image viewer.** Tap any image to open a fullscreen
    viewer with prompt/seed/sampler details. Closes the last "wire placeholder
    buttons" gap from `CLAUDE.md`.

@@ -48,10 +48,12 @@ Status:
       gradient). Works for desktop/Android. **iOS still needs PNG raster
       icons** (180/192/512) for proper "Add to Home Screen" — follow-up
       below.
-- [ ] 🟡 **iOS PNG icons.** Apple Safari prefers raster PNG for the home
-      screen icon. Without them, iOS may use a screenshot. Needs a build
-      step or hand-exported PNGs at 180×180 (apple-touch-icon), 192×192,
-      and 512×512.
+- [ ] 🟢 **iOS PNG icons.** _(deprioritized — primary user is on Android.)_
+      Apple Safari prefers raster PNG for the home-screen icon. Without
+      them, iOS may use a screenshot. If iOS support becomes relevant,
+      hand-export PNGs at 180×180 (apple-touch-icon), 192×192, and
+      512×512 from `public/icon.svg`, drop them in `public/`, and re-add
+      the `apple-touch-icon` link + PNG manifest entries.
 - [ ] 🟡 **No splash screen.** Briefly shows a white screen on launch.
 - [ ] 🟢 **No service worker.** Means no offline capability and slower
       cold loads. Optional unless you want the app to work without internet
@@ -160,8 +162,11 @@ button / 🟢 hardcoded display only.
       Custom-seed entry is still uncontrolled (no real seed sent yet
       — wired with ComfyUI integration).
 - [ ] 🟡 Advanced → "Select VAE" button — no handler.
-- [ ] 🔴 **Generate button** (dock) — no handler. (Expected; needs
-      ComfyUI.)
+- [x] 🔴 **Generate button** (dock) — ✅ wired. Builds a Text→Image
+      ComfyUI workflow from the form state, submits to `/prompt`, polls
+      `/history` for completion, and shows the result inline. Loading
+      spinner while running; visible error banner on failure.
+      Requires `Settings → Checkpoint filename` to be set first.
 
 ### Screen B — Queue
 
@@ -234,9 +239,9 @@ button / 🟢 hardcoded display only.
 
 ### Onboarding flow
 
-- [ ] 🔴 **"Test Connection" is fake** — it always succeeds after a
-      1.2-second wait, regardless of the URL typed. (Real check needs
-      ComfyUI transport, Phase 3.)
+- [x] 🔴 **"Test Connection" is fake** — ✅ now hits
+      `${baseUrl}/system_stats` for real. Failure shows the exact error
+      including a CORS hint when network errors hit.
 - [x] 🔴 The ComfyUI URL the user types is never saved anywhere. ✅ Now
       written to `settings.backendUrl` on Done.
 - [x] 🔴 "Pick default model" choice is never saved. ✅ Now written to
