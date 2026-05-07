@@ -5,7 +5,7 @@ You are working on CivitFree, a local-first personal image generation UI for Com
 ## Required reading first
 
 - `CLAUDE.md`
-- `uploads/civitfree-claude-design-instructions-3.md`
+- `Uploads/civitfree-claude-design-instructions-3.md`
 
 ## Goal
 
@@ -15,7 +15,7 @@ Convert the existing prototype files into a clean, runnable React app scaffold w
 
 - Keep the mobile-first UI look intact.
 - Do not remove the existing prototype/exported HTML files.
-- Do not invent new product behavior that conflicts with `uploads/civitfree-claude-design-instructions-3.md`.
+- Do not invent new product behavior that conflicts with `Uploads/civitfree-claude-design-instructions-3.md`.
 - Make technical decisions without asking the user unless the behavior is truly undefined.
 - Keep the project local-first, with ComfyUI as the backend target.
 

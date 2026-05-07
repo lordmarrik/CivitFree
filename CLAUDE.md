@@ -29,11 +29,11 @@
 - LoRA section upgrade (thumbnails + strength sliders + × to remove, per Civitai reference screenshots)
 
 ## Reference screenshots saved
-- uploads/Screenshot_20260504_154152_Brave.png — Civitai wand menu
-- uploads/Screenshot_20260504_153726_Brave.png — Civitai image detail + overflow menu
-- uploads/Screenshot_20260504_162545_Brave.png — Civitai model picker
-- uploads/Screenshot_20260504_162539_Brave.png — Civitai resource picker
-- uploads/Screenshot_20260504_162956_Brave.png — Civitai loaded LoRAs with sliders
+- Uploads/Screenshot_20260504_154152_Brave.png — Civitai wand menu
+- Uploads/Screenshot_20260504_153726_Brave.png — Civitai image detail + overflow menu
+- Uploads/Screenshot_20260504_162545_Brave.png — Civitai model picker
+- Uploads/Screenshot_20260504_162539_Brave.png — Civitai resource picker
+- Uploads/Screenshot_20260504_162956_Brave.png — Civitai loaded LoRAs with sliders
 
 ## Files
 - CivitFree Personal.html — main file
