@@ -269,7 +269,7 @@ export function ModelPicker({ open, onClose }) {
   );
 }
 
-export function LoraPicker({ open, onClose }) {
+export function LoraPicker({ open, onClose, onSelect }) {
   const [sourceTab, setSourceTab] = React.useState('local');
   const [browseTab, setBrowseTab] = React.useState('ALL');
   const [localTab, setLocalTab] = React.useState('ALL');
@@ -370,7 +370,18 @@ export function LoraPicker({ open, onClose }) {
             size={l.size}
             palette={l.palette}
             seed={l.seed}
-            onSelect={onClose}
+            onSelect={() => {
+              if (onSelect) {
+                onSelect({
+                  id: l.name,
+                  name: l.name,
+                  ver: `${l.base} ${l.ver || 'v1.0'}`,
+                  palette: l.palette,
+                  seed: l.seed,
+                });
+              }
+              onClose && onClose();
+            }}
           />
         ))}
       </div>

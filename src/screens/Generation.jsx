@@ -1,12 +1,21 @@
 import React from 'react';
 import { Ic } from '../shared/icons.jsx';
+import { FakeImg } from '../shared/mockImages.jsx';
 import { StatusBar, TopBar, Dock, SectionTitle } from '../shared/Shell.jsx';
 import { Chips, SliderRow, ParamRow, CollapsibleCard, AspectRatioRow } from '../shared/controls.jsx';
 import { SideDrawer } from '../components/Drawer.jsx';
 import { ModelPicker, LoraPicker } from '../components/ModelPicker.jsx';
 import { BackendSwitcher } from '../components/SortFilter.jsx';
 
-export function VariantPersonalClassic({ onTab }) {
+export function VariantPersonalClassic({
+  onTab,
+  prompt,
+  onPromptChange,
+  loras = [],
+  onAddLora,
+  onUpdateLoraStrength,
+  onRemoveLora,
+}) {
   const [modality, setModality] = React.useState('image');
   const [tab, setTab] = React.useState('t2i');
   const [aspect, setAspect] = React.useState('2:3');
@@ -139,19 +148,61 @@ export function VariantPersonalClassic({ onTab }) {
 
         <div className="cf-section">
           <div className="cf-card" style={{padding: '12px 14px'}}>
-            <div className="row between" style={{marginBottom: 6}}>
-              <div className="label">LoRAs &amp; Embeddings</div>
+            <div className="row between" style={{marginBottom: loras.length ? 10 : 6}}>
+              <div className="label">
+                <span>Additional Resources</span>
+                {loras.length > 0 && (
+                  <span className="mute mono" style={{fontSize: 11, marginLeft: 6, fontWeight: 500}}>
+                    {loras.length}/12
+                  </span>
+                )}
+              </div>
               <button onClick={() => setLoraPickerOpen(true)} style={{display:'flex', alignItems:'center', gap:4, color:'var(--cyan)', fontSize:12, fontWeight: 600}}>
                 <Ic.Plus size={12}/> Add
               </button>
             </div>
-            <div className="cf-add-empty">None loaded · 312 available locally</div>
+            {loras.length === 0 ? (
+              <div className="cf-add-empty">None loaded · 312 available locally</div>
+            ) : (
+              <>
+                <div className="cf-lora-section-label">LoRA</div>
+                {loras.map(l => (
+                  <div key={l.id} className="cf-lora-row">
+                    <div className="head">
+                      <div className="thumb"><FakeImg palette={l.palette} seed={l.seed}/></div>
+                      <div className="meta">
+                        <div className="name">{l.name}</div>
+                        <div className="ver">({l.ver})</div>
+                      </div>
+                      <button
+                        className="remove"
+                        onClick={() => onRemoveLora && onRemoveLora(l.id)}
+                        aria-label={`Remove ${l.name}`}
+                      >
+                        <Ic.X size={14}/>
+                      </button>
+                    </div>
+                    <SliderRow
+                      value={l.strength}
+                      min={0} max={1} step={0.05}
+                      onChange={s => onUpdateLoraStrength && onUpdateLoraStrength(l.id, s)}
+                      displayValue={l.strength.toFixed(2)}
+                    />
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
 
         <div className="cf-section">
           <SectionTitle required>Prompt</SectionTitle>
-          <textarea className="cf-textarea" defaultValue="(prompt)" placeholder="Describe what you'd like to see…"/>
+          <textarea
+            className="cf-textarea"
+            value={prompt ?? ''}
+            onChange={e => onPromptChange && onPromptChange(e.target.value)}
+            placeholder="Describe what you'd like to see…"
+          />
         </div>
 
         <div className="cf-section">
@@ -223,7 +274,11 @@ export function VariantPersonalClassic({ onTab }) {
 
       <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}/>
       <ModelPicker open={modelPickerOpen} onClose={() => setModelPickerOpen(false)}/>
-      <LoraPicker open={loraPickerOpen} onClose={() => setLoraPickerOpen(false)}/>
+      <LoraPicker
+        open={loraPickerOpen}
+        onClose={() => setLoraPickerOpen(false)}
+        onSelect={onAddLora}
+      />
       <BackendSwitcher open={backendOpen} onClose={() => setBackendOpen(false)}/>
     </div>
   );
