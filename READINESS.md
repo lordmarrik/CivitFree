@@ -59,11 +59,13 @@ Status:
 
 ## 3. State persistence — "close the tab, lose everything"
 
-- [ ] 🔴 **Loaded LoRAs vanish on refresh.** State is in-memory only.
-- [ ] 🔴 **Prompt vanishes on refresh.** Same.
-- [ ] 🔴 **Onboarding URL not saved.** You can type your ComfyUI server
-      address into the onboarding screen but the app forgets it the
-      moment you close the modal.  _File: `src/screens/Onboarding.jsx`._
+- [x] 🔴 **Loaded LoRAs vanish on refresh.** ✅ Persisted to localStorage
+      via `usePersisted('loras', …)` in `src/main.jsx`.
+- [x] 🔴 **Prompt vanishes on refresh.** ✅ Same; now persisted (also
+      negative prompt and selected model).
+- [x] 🔴 **Onboarding URL not saved.** ✅ "Done — Start Creating" now
+      writes the URL and the picked default model into the persisted
+      `settings` object.
 - [ ] 🟡 **No queue history.** Mock runs are hardcoded; real generations
       would need somewhere to live (likely IndexedDB or the ComfyUI
       `/history` endpoint).
@@ -139,21 +141,24 @@ button / 🟢 hardcoded display only.
 - [ ] 🔴 Upscale tab: 2× / 3× / 4× chips visually look interactive
       (one is highlighted) but no handlers — you can't pick a different
       multiplier.
-- [ ] 🔴 Model card: hardcoded "HomoSimile XL v4.0". The Change button
-      opens the picker, but selecting any model in the picker just closes
-      the sheet — the card never actually changes.
-- [ ] 🔴 Negative Prompt input has `defaultValue="(negative)"` — that
-      "(negative)" looks like debug text. Field is also uncontrolled, so
-      typing into it doesn't connect to anything.
+- [x] 🔴 Model card: ✅ now reflects the selected model. ModelPicker emits
+      `onSelect`; the chosen name/version/size/base populates the card and
+      persists across reloads.
+- [x] 🔴 Negative Prompt input ✅ now controlled, with a real placeholder
+      ("e.g. blurry, low quality, deformed") and persists across reloads.
 - [ ] 🟡 Output Settings: "PNG" and "High" chips have no handlers.
-- [ ] 🔴 Advanced → Sampler "Euler a" dropdown: looks like a dropdown,
-      doesn't open anything.
-- [ ] 🔴 Advanced → CFG / Steps / Sampler preset chips
-      (Creative/Balanced/Precise, Fast/Balanced/High, Fast/Popular):
-      tapping one highlights it but doesn't change the slider below it.
-      Two unconnected controls staring at each other.
-- [ ] 🔴 Advanced → Seed: `defaultValue="687051578"` is hardcoded;
-      tapping "Random" doesn't generate a random seed.
+- [ ] 🟡 Advanced → Sampler "Euler a" dropdown: still doesn't open as a
+      list, but the displayed text now reflects the Sampler preset chip
+      (Fast / Popular). Real searchable dropdown is a follow-up.
+- [x] 🔴 Advanced → CFG / Steps / Sampler preset chips ✅ now drive the
+      slider next to them. Picking _Creative / Balanced / Precise_
+      sets CFG to 3 / 7 / 12; _Fast / Balanced / High_ sets Steps to
+      20 / 30 / 50; _Fast / Popular_ sets Sampler to Euler a / DPM++ 2M
+      Karras. Moving the slider off-preset deselects the chip.
+- [ ] 🟡 Advanced → Seed: hardcoded `687051578` removed. When Random is
+      selected, the input is disabled with an "auto" placeholder.
+      Custom-seed entry is still uncontrolled (no real seed sent yet
+      — wired with ComfyUI integration).
 - [ ] 🟡 Advanced → "Select VAE" button — no handler.
 - [ ] 🔴 **Generate button** (dock) — no handler. (Expected; needs
       ComfyUI.)
@@ -170,10 +175,10 @@ button / 🟢 hardcoded display only.
       it should add the resource as a LoRA but doesn't.
 - [ ] 🟡 Per-image Download button — no handler.
 - [ ] 🟡 Sort row "Select all" + checkbox — visual only.
-- [ ] 🔴 Image action sheet items that just close: _Image Variations,
-      Image to Image, Face Fix, Upscale, Remove Background, Image to
-      Video, Download, Delete_. Eight items that look like distinct
-      actions but all do the same thing (nothing).
+- [x] 🔴 Image action sheet items that just close: ✅ unwired items now
+      show a muted `soon` badge so they read as "coming later" instead
+      of "lying about working". _Inpaint_ and the two _Remix_ entries
+      remain fully wired.
 
 ### Screen C — Feed
 
@@ -200,21 +205,24 @@ button / 🟢 hardcoded display only.
 
 ### Drawer (hamburger menu)
 
-- [ ] 🔴 **Settings: every field is `readOnly`.** Backend Profile,
-      ComfyUI URL, default model, sampler, scheduler, steps, CFG, size,
-      Cloud GPU credentials, CivitAI API key, save paths — none of them
-      can be changed. The whole Settings screen is a display-only fake.
+- [x] 🔴 **Settings: every field is `readOnly`.** ✅ All fields now
+      editable and persisted: Backend Profile (toggle), ComfyUI URL
+      (text), Default Model / Sampler / Scheduler / Size (selects),
+      Steps + CFG (number inputs), Cloud GPU & CivitAI keys (password
+      inputs), PC + Phone save paths (text). Persists across reloads.
 - [ ] 🟡 Model Library: "Browse CivitAI" tab search input is a stub.
 - [ ] 🟡 LoRA Manager: "Browse CivitAI" tab search input is a stub.
-- [ ] 🟢 About: "Connected" status with green dot is hardcoded text,
-      regardless of actual connection.
+- [x] 🟢 About: "Connected" status with green dot is hardcoded. ✅
+      Removed; the screen now shows only what we actually know
+      (backend URL from settings).
 
 ### Model Picker
 
-- [ ] 🔴 "Browse CivitAI" tab is fake — it's filtering a hardcoded
-      array of 4 names, not calling any API.
+- [ ] 🟡 "Browse CivitAI" tab is fake — it's filtering a hardcoded
+      array of 4 names, not calling any API. (Local "Select" now
+      actually changes Screen A's model.)
 - [ ] 🟡 Per-card Info (ⓘ) and More (⋯) buttons — no handlers.
-- [ ] 🔴 Top tabs (FAVORITE / RECENT / LOADED) highlight on tap but
+- [ ] 🟡 Top tabs (FAVORITE / RECENT / LOADED) highlight on tap but
       don't actually filter the list.
 - [ ] 🟡 Sort row, Filters button, Settings gear (browse mode) — no
       handlers.
@@ -227,10 +235,14 @@ button / 🟢 hardcoded display only.
 ### Onboarding flow
 
 - [ ] 🔴 **"Test Connection" is fake** — it always succeeds after a
-      1.2-second wait, regardless of the URL typed.
-- [ ] 🔴 The ComfyUI URL the user types is never saved anywhere.
-- [ ] 🔴 "Pick default model" choice is never saved.
-- [ ] 🔴 "Done — Start Creating" closes the modal, discarding everything.
+      1.2-second wait, regardless of the URL typed. (Real check needs
+      ComfyUI transport, Phase 3.)
+- [x] 🔴 The ComfyUI URL the user types is never saved anywhere. ✅ Now
+      written to `settings.backendUrl` on Done.
+- [x] 🔴 "Pick default model" choice is never saved. ✅ Now written to
+      `settings.defaultModelName` on Done.
+- [x] 🔴 "Done — Start Creating" closes the modal, discarding everything.
+      ✅ Now persists URL + model selection before closing.
 
 ### Backend switcher (sheet from the dock GPU pill)
 

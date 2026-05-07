@@ -25,11 +25,15 @@ export function SheetSection({ label, children }) {
   );
 }
 
-export function SheetItem({ icon, label, danger, onClick }) {
+export function SheetItem({ icon, label, danger, soon, onClick }) {
   return (
-    <button className={`cf-sheet-item ${danger ? 'danger' : ''}`} onClick={onClick}>
+    <button
+      className={`cf-sheet-item ${danger ? 'danger' : ''} ${soon ? 'soon' : ''}`}
+      onClick={onClick}
+    >
       {icon}
-      <span>{label}</span>
+      <span style={{flex: 1, textAlign: 'left'}}>{label}</span>
+      {soon && <span className="cf-sheet-soon">soon</span>}
     </button>
   );
 }
@@ -50,19 +54,19 @@ export function ImageActionSheet({ open, onClose, seed, palette, prompt, onInpai
         <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix (with seed)" onClick={() => fireRemix(true)}/>
       </SheetSection>
       <SheetSection label="Image">
-        <SheetItem icon={<Ic.Sparkle size={16}/>} label="Image Variations" onClick={onClose}/>
-        <SheetItem icon={<Ic.Image size={16}/>} label="Image to Image" onClick={onClose}/>
+        <SheetItem icon={<Ic.Sparkle size={16}/>} label="Image Variations" soon onClick={onClose}/>
+        <SheetItem icon={<Ic.Image size={16}/>} label="Image to Image" soon onClick={onClose}/>
         <SheetItem icon={<Ic.Brush2 size={16}/>} label="Inpaint" onClick={fireInpaint}/>
-        <SheetItem icon={<Ic.Wand size={16}/>} label="Face Fix" onClick={onClose}/>
-        <SheetItem icon={<Ic.ChevUp size={16}/>} label="Upscale" onClick={onClose}/>
-        <SheetItem icon={<Ic.Eraser size={16}/>} label="Remove Background" onClick={onClose}/>
+        <SheetItem icon={<Ic.Wand size={16}/>} label="Face Fix" soon onClick={onClose}/>
+        <SheetItem icon={<Ic.ChevUp size={16}/>} label="Upscale" soon onClick={onClose}/>
+        <SheetItem icon={<Ic.Eraser size={16}/>} label="Remove Background" soon onClick={onClose}/>
       </SheetSection>
       <SheetSection label="Video">
-        <SheetItem icon={<Ic.Video size={16}/>} label="Image to Video" onClick={onClose}/>
+        <SheetItem icon={<Ic.Video size={16}/>} label="Image to Video" soon onClick={onClose}/>
       </SheetSection>
       <SheetSection>
-        <SheetItem icon={<Ic.Download size={16}/>} label="Download" onClick={onClose}/>
-        <SheetItem icon={<Ic.Trash size={16}/>} label="Delete" danger onClick={onClose}/>
+        <SheetItem icon={<Ic.Download size={16}/>} label="Download" soon onClick={onClose}/>
+        <SheetItem icon={<Ic.Trash size={16}/>} label="Delete" danger soon onClick={onClose}/>
       </SheetSection>
     </BottomSheet>
   );

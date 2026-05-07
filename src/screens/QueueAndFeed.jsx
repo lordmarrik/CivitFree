@@ -111,7 +111,7 @@ const RUNS = [
   },
 ];
 
-export function VariantPersonalQueue({ onTab, onSendToInpaint, onRemix }) {
+export function VariantPersonalQueue({ onTab, onSendToInpaint, onRemix, settings, onSettingsChange }) {
   const [activeAction, setActiveAction] = React.useState(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [sortOpen, setSortOpen] = React.useState(false);
@@ -144,12 +144,17 @@ export function VariantPersonalQueue({ onTab, onSendToInpaint, onRemix }) {
       />
       <SortSheet open={sortOpen} onClose={() => setSortOpen(false)}/>
       <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)}/>
-      <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}/>
+      <SideDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        settings={settings}
+        onSettingsChange={onSettingsChange}
+      />
     </div>
   );
 }
 
-export function VariantPersonalFeed({ onTab, onSendToInpaint, onRemix }) {
+export function VariantPersonalFeed({ onTab, onSendToInpaint, onRemix, settings, onSettingsChange }) {
   const [activeAction, setActiveAction] = React.useState(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [sortOpen, setSortOpen] = React.useState(false);
@@ -190,7 +195,12 @@ export function VariantPersonalFeed({ onTab, onSendToInpaint, onRemix }) {
       />
       <SortSheet open={sortOpen} onClose={() => setSortOpen(false)}/>
       <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)}/>
-      <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}/>
+      <SideDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        settings={settings}
+        onSettingsChange={onSettingsChange}
+      />
     </div>
   );
 }

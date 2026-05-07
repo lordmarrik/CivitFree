@@ -6,7 +6,7 @@ import { Chips, SliderRow } from '../shared/controls.jsx';
 import { SideDrawer } from '../components/Drawer.jsx';
 import { BackendSwitcher } from '../components/SortFilter.jsx';
 
-export function VariantPersonalInpaint({ onTab, source }) {
+export function VariantPersonalInpaint({ onTab, source, settings, onSettingsChange }) {
   const [activeTab, setActiveTab] = React.useState('inpaint');
   const [tool, setTool] = React.useState('brush');
   const [size, setSize] = React.useState(48);
@@ -289,7 +289,12 @@ export function VariantPersonalInpaint({ onTab, source }) {
         onGpuClick={() => setBackendOpen(true)}
       />
 
-      <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}/>
+      <SideDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        settings={settings}
+        onSettingsChange={onSettingsChange}
+      />
       <BackendSwitcher open={backendOpen} onClose={() => setBackendOpen(false)}/>
     </div>
   );

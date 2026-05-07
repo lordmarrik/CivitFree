@@ -4,6 +4,7 @@ import { VariantPersonalClassic } from './screens/Generation.jsx';
 import { VariantPersonalQueue, VariantPersonalFeed } from './screens/QueueAndFeed.jsx';
 import { VariantPersonalInpaint } from './screens/Inpaint.jsx';
 import { OnboardingFlow } from './screens/Onboarding.jsx';
+import { usePersisted } from './shared/usePersisted.js';
 import './styles.css';
 
 const screens = [
@@ -13,15 +14,38 @@ const screens = [
   { id: 'inpaint', label: 'D', title: 'Inpaint' },
 ];
 
-const DEFAULT_PROMPT = '';
+const DEFAULT_MODEL = {
+  name: 'HomoSimile XL',
+  ver: 'v4.0',
+  size: '6.4 GB',
+  base: 'SDXL',
+};
+
+const DEFAULT_SETTINGS = {
+  backendProfile: 'steubenville',
+  backendUrl: 'http://192.168.1.42:8188',
+  defaultModelName: 'HomoSimile XL v4.0',
+  sampler: 'Euler a',
+  scheduler: 'Normal',
+  steps: 30,
+  cfg: 7,
+  size: '832×1216',
+  cloudGpuKey: '',
+  civitaiKey: '',
+  pcSavePath: '/home/user/civitfree/outputs',
+  phoneSavePath: '/storage/emulated/0/CivitFree',
+};
 
 function App() {
   const [screen, setScreen] = useState('brush');
   const [onboardingOpen, setOnboardingOpen] = useState(false);
-
-  const [loras, setLoras] = useState([]);
-  const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
   const [inpaintSource, setInpaintSource] = useState(null);
+
+  const [prompt, setPrompt] = usePersisted('prompt', '');
+  const [negativePrompt, setNegativePrompt] = usePersisted('negativePrompt', '');
+  const [loras, setLoras] = usePersisted('loras', []);
+  const [model, setModel] = usePersisted('model', DEFAULT_MODEL);
+  const [settings, setSettings] = usePersisted('settings', DEFAULT_SETTINGS);
 
   const handleTab = (key) => {
     if (key === 'brush' || key === 'clock' || key === 'grid') setScreen(key);
@@ -40,7 +64,11 @@ function App() {
     setLoras(prev => prev.filter(l => l.id !== id));
   };
 
-  const remix = ({ prompt: p, seed } = {}) => {
+  const updateSettings = (patch) => {
+    setSettings(prev => ({ ...prev, ...patch }));
+  };
+
+  const remix = ({ prompt: p } = {}) => {
     if (p) setPrompt(p);
     setScreen('brush');
   };
@@ -83,10 +111,16 @@ function App() {
           onTab={handleTab}
           prompt={prompt}
           onPromptChange={setPrompt}
+          negativePrompt={negativePrompt}
+          onNegativePromptChange={setNegativePrompt}
           loras={loras}
           onAddLora={addLora}
           onUpdateLoraStrength={updateLoraStrength}
           onRemoveLora={removeLora}
+          model={model}
+          onModelChange={setModel}
+          settings={settings}
+          onSettingsChange={updateSettings}
         />
       )}
       {screen === 'clock' && (
@@ -94,6 +128,8 @@ function App() {
           onTab={handleTab}
           onSendToInpaint={sendToInpaint}
           onRemix={remix}
+          settings={settings}
+          onSettingsChange={updateSettings}
         />
       )}
       {screen === 'grid' && (
@@ -101,12 +137,16 @@ function App() {
           onTab={handleTab}
           onSendToInpaint={sendToInpaint}
           onRemix={remix}
+          settings={settings}
+          onSettingsChange={updateSettings}
         />
       )}
       {screen === 'inpaint' && (
         <VariantPersonalInpaint
           onTab={handleTab}
           source={inpaintSource}
+          settings={settings}
+          onSettingsChange={updateSettings}
         />
       )}
 
@@ -118,7 +158,12 @@ function App() {
           padding: 16,
         }} onClick={() => setOnboardingOpen(false)}>
           <div className="cf-frame" style={{boxShadow:'0 24px 60px -32px rgba(0,0,0,.85)'}} onClick={e => e.stopPropagation()}>
-            <OnboardingFlow open={true} onClose={() => setOnboardingOpen(false)}/>
+            <OnboardingFlow
+              open={true}
+              onClose={() => setOnboardingOpen(false)}
+              settings={settings}
+              onSettingsChange={updateSettings}
+            />
           </div>
         </div>
       )}
