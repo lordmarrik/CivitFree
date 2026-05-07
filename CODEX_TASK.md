@@ -1,28 +1,32 @@
-# Codex task: turn CivitFree prototype into a runnable app scaffold
+# Codex task: continue the CivitFree Personal app scaffold
 
-You are working on CivitFree, a local-first personal image generation UI for ComfyUI.
+You are working on CivitFree Personal, a local-first personal image generation UI for ComfyUI. The personal/local app is the only implementation target.
 
 ## Required reading first
 
 - `CLAUDE.md`
 - `Uploads/civitfree-claude-design-instructions-3.md`
 
+## Current scaffold status
+
+A minimal Vite + React scaffold now exists in `package.json`, `index.html`, and `src/`. It renders the personal-only Screens A–D, wires local shell interactions, and includes a stubbed ComfyUI client boundary.
+
 ## Goal
 
-Convert the existing prototype files into a clean, runnable React app scaffold while preserving the current visual design and locked interaction decisions.
+Continue porting the existing personal prototype files into the runnable React app while preserving the current visual design and locked interaction decisions.
 
 ## Constraints
 
 - Keep the mobile-first UI look intact.
-- Do not remove the existing prototype/exported HTML files.
+- Do not remove the existing prototype/exported HTML files. Keep `CivitFree Personal.html` as the visual source of truth and treat `CivitFree.html` as legacy reference only.
 - Do not invent new product behavior that conflicts with `Uploads/civitfree-claude-design-instructions-3.md`.
 - Make technical decisions without asking the user unless the behavior is truly undefined.
 - Keep the project local-first, with ComfyUI as the backend target.
 
-## Suggested first implementation pass
+## Suggested next implementation pass
 
-1. Create a minimal Vite + React project structure.
-2. Move/re-export the JSX components into `src/` with proper imports.
+1. Keep the Vite + React project structure runnable.
+2. Move/re-export the personal JSX components into `src/` with proper imports.
 3. Preserve the four current screens:
    - Screen A: Generation panel
    - Screen B: Queue/runs feed
@@ -36,21 +40,21 @@ Convert the existing prototype files into a clean, runnable React app scaffold w
    - Sort/filter controls open bottom sheets.
    - Remove the Screen B “Generate Again” bar if still present.
    - Remove the top-bar X button if still present.
-5. Add a placeholder ComfyUI client module with typed functions/stubs for:
+5. Extend the placeholder ComfyUI client module with typed functions/stubs for:
    - testing backend connection
    - listing checkpoints and LoRAs
    - submitting workflow JSON
    - polling queue/history
    - downloading generated images
-6. Add README run instructions.
-7. Add smoke tests or at least `npm run build` validation.
+6. Keep README run instructions current.
+7. Add smoke tests and keep `npm run build` validation passing.
 
 ## Deliverable
 
 Open a PR with:
 
-- runnable app scaffold
-- preserved prototype visual state
+- runnable app scaffold kept passing
+- preserved personal prototype visual state
 - implemented shell interactions where no backend is required
 - placeholder/stubbed backend integration boundary
 - clear notes on what remains for real ComfyUI workflow graph mutation
