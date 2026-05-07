@@ -632,6 +632,50 @@ input, textarea, select { font: inherit; color: inherit; }
 .dim { color: var(--text-dim); }
 .mute { color: var(--text-mute); }
 
+/* Generate error banner */
+.cf-error-banner {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; border-radius: 10px;
+  background: oklch(0.30 0.12 25 / .15);
+  border: 1px solid oklch(0.45 0.18 25 / .35);
+  color: var(--bad); font-size: 12px; line-height: 1.5;
+  white-space: pre-wrap; word-break: break-word;
+}
+.cf-error-banner strong { font-size: 12px; flex-shrink: 0; }
+.cf-error-banner span { flex: 1; min-width: 0; color: var(--text); }
+.cf-error-banner button {
+  flex-shrink: 0; color: var(--text-dim);
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Latest-generation result card */
+.cf-result-card {
+  background: var(--panel);
+  border: 1px solid var(--accent-line);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px oklch(0.50 0.18 340 / .15);
+}
+.cf-result-card img {
+  display: block; width: 100%; height: auto;
+  background: var(--panel-3);
+  max-height: 400px; object-fit: contain;
+}
+.cf-result-card .meta {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 12px;
+}
+.cf-result-card .meta .label { font-weight: 600; }
+.cf-result-card .meta .seed { color: var(--text-mute); font-size: 11px; }
+.cf-result-card .meta .dismiss {
+  margin-left: auto; color: var(--text-dim);
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+}
+
 /* LoRA loaded-state row */
 .cf-lora-section-label {
   font-size: 10px; font-weight: 700; letter-spacing: .12em;

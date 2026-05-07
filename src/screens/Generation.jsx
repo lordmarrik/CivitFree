@@ -6,6 +6,13 @@ import { Chips, SliderRow, ParamRow, CollapsibleCard, AspectRatioRow } from '../
 import { SideDrawer } from '../components/Drawer.jsx';
 import { ModelPicker, LoraPicker } from '../components/ModelPicker.jsx';
 import { BackendSwitcher } from '../components/SortFilter.jsx';
+import {
+  submitWorkflow,
+  waitForResult,
+  imageUrl as comfyImageUrl,
+  extractImagesFromHistory,
+} from '../services/comfyClient.js';
+import { buildTextToImageWorkflow, randomSeed } from '../services/buildWorkflow.js';
 
 export function VariantPersonalClassic({
   onTab,
@@ -47,11 +54,100 @@ export function VariantPersonalClassic({
 
   const safeModel = model || { name: 'HomoSimile XL', ver: 'v4.0', size: '6.4 GB', base: 'SDXL' };
 
+  const [generating, setGenerating] = React.useState(false);
+  const [genError, setGenError] = React.useState(null);
+  const [latestResult, setLatestResult] = React.useState(null);
+
+  const handleGenerate = async () => {
+    setGenError(null);
+    const baseUrl = settings?.backendUrl;
+    const checkpoint = settings?.checkpointFilename;
+    if (!baseUrl) {
+      setGenError('Set the ComfyUI backend URL in Settings first.');
+      return;
+    }
+    if (!checkpoint) {
+      setGenError('Set the Checkpoint filename in Settings first (the actual file in your ComfyUI models/checkpoints folder).');
+      return;
+    }
+    if (!prompt || !prompt.trim()) {
+      setGenError('Type a prompt before generating.');
+      return;
+    }
+
+    const seed = randomSeed();
+    const workflow = buildTextToImageWorkflow({
+      checkpointFilename: checkpoint,
+      prompt,
+      negativePrompt,
+      sampler,
+      scheduler: settings?.scheduler ?? 'Normal',
+      cfg,
+      steps,
+      seed,
+      size: settings?.size ?? '832×1216',
+      loras: (loras || []).map(l => ({
+        filename: l.filename || l.name,
+        strength: l.strength ?? 0.8,
+      })),
+    });
+
+    setGenerating(true);
+    try {
+      const submitRes = await submitWorkflow(baseUrl, workflow);
+      const promptId = submitRes.prompt_id;
+      const history = await waitForResult(baseUrl, promptId);
+      const images = extractImagesFromHistory(history);
+      if (images.length === 0) {
+        throw new Error('Generation finished but ComfyUI returned no images.');
+      }
+      const first = images[0];
+      setLatestResult({
+        url: comfyImageUrl(baseUrl, first),
+        filename: first.filename,
+        seed,
+        prompt,
+        promptId,
+      });
+    } catch (err) {
+      const msg = err?.message || String(err);
+      const hint = err?.hint ? `\n${err.hint}` : '';
+      setGenError(msg + hint);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="cf-frame">
       <StatusBar/>
       <TopBar active="brush" personal onMenu={() => setDrawerOpen(true)} onTab={onTab}/>
       <div className="cf-body">
+        {genError && (
+          <div className="cf-section" style={{paddingTop: 12, paddingBottom: 0}}>
+            <div className="cf-error-banner">
+              <strong>Generate failed</strong>
+              <span>{genError}</span>
+              <button onClick={() => setGenError(null)} aria-label="Dismiss"><Ic.X size={14}/></button>
+            </div>
+          </div>
+        )}
+
+        {latestResult && (
+          <div className="cf-section" style={{paddingTop: 12, paddingBottom: 0}}>
+            <div className="cf-result-card">
+              <img src={latestResult.url} alt={`Result · seed ${latestResult.seed}`}/>
+              <div className="meta">
+                <span className="label">Latest result</span>
+                <span className="seed mono">seed {latestResult.seed}</span>
+                <button onClick={() => setLatestResult(null)} className="dismiss" aria-label="Dismiss result">
+                  <Ic.X size={14}/>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="cf-section" style={{paddingTop: 12}}>
           <div className="cf-modality">
             <div className="mod-tabs">
@@ -302,7 +398,17 @@ export function VariantPersonalClassic({
           </CollapsibleCard>
         </div>
       </div>
-      <Dock label="Generate" personal etaSec={18} gpu="Cloud GPU" qty={qty} onQty={setQty} onGpuClick={() => setBackendOpen(true)}/>
+      <Dock
+        label="Generate"
+        personal
+        etaSec={18}
+        gpu="Cloud GPU"
+        qty={qty}
+        onQty={setQty}
+        onGpuClick={() => setBackendOpen(true)}
+        onGenerate={handleGenerate}
+        generating={generating}
+      />
 
       <SideDrawer
         open={drawerOpen}

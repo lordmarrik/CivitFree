@@ -178,7 +178,7 @@ function DrawerSettings({ onBack, settings, onSettingsChange }) {
         </div>
 
         <div>
-          <div style={labelStyle}>Default Model</div>
+          <div style={labelStyle}>Default Model (display)</div>
           <select
             style={selectStyle}
             value={s.defaultModelName ?? ''}
@@ -186,6 +186,23 @@ function DrawerSettings({ onBack, settings, onSettingsChange }) {
           >
             {MODEL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
+        </div>
+
+        <div>
+          <div style={labelStyle}>Checkpoint filename (used to generate)</div>
+          <input
+            style={fieldStyle}
+            value={s.checkpointFilename ?? ''}
+            onChange={e => set({ checkpointFilename: e.target.value })}
+            placeholder="e.g. dreamshaperXL_v85.safetensors"
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
+          />
+          <div className="mute" style={{fontSize: 10, marginTop: 4, lineHeight: 1.4}}>
+            Exact filename from your ComfyUI <code>models/checkpoints/</code> folder.
+            Real listing from the server lands later — for now, type it.
+          </div>
         </div>
 
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap: 8}}>

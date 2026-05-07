@@ -53,7 +53,7 @@ export function TopBar({ active = 'brush', settings = false, onTab, personal = f
   );
 }
 
-export function Dock({ qty = 2, price = 5, label = 'Generate', personal = false, etaSec, gpu, onGpuClick, onQty }) {
+export function Dock({ qty = 2, price = 5, label = 'Generate', personal = false, etaSec, gpu, onGpuClick, onQty, onGenerate, generating = false }) {
   return (
     <div className="cf-dock">
       <div className="cf-dock-row1" onClick={personal ? onGpuClick : undefined} style={personal ? {cursor:'pointer'} : undefined}>
@@ -112,9 +112,25 @@ export function Dock({ qty = 2, price = 5, label = 'Generate', personal = false,
             </div>
           </div>
         )}
-        <button className="cf-generate">
-          <span>{label}</span>
-          {!personal && (
+        <button
+          className="cf-generate"
+          onClick={onGenerate}
+          disabled={generating || !onGenerate}
+          style={generating ? { opacity: 0.7, cursor: 'wait' } : undefined}
+        >
+          {generating ? (
+            <>
+              <span style={{
+                width: 16, height: 16, borderRadius:'50%',
+                border:'2px solid rgba(255,255,255,.5)', borderTopColor:'white',
+                animation:'cf-spin .8s linear infinite',
+              }}/>
+              <span>Generating…</span>
+            </>
+          ) : (
+            <span>{label}</span>
+          )}
+          {!personal && !generating && (
             <span className="price">
               <Ic.Bolt size={11} color="oklch(0.85 0.18 70)"/>
               {price}

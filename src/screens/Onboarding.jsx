@@ -1,5 +1,6 @@
 import React from 'react';
 import { Ic } from '../shared/icons.jsx';
+import { testConnection } from '../services/comfyClient.js';
 
 const ONBOARDING_MODELS = [
   { id:'homosimile', name:'HomoSimile XL', ver:'v4.0', size:'6.4 GB', base:'SDXL' },
@@ -19,13 +20,24 @@ export function OnboardingFlow({ open, onClose, settings, onSettingsChange }) {
   const [url, setUrl] = React.useState(() => settings?.backendUrl ?? 'http://192.168.1.42:8188');
   const [testing, setTesting] = React.useState(false);
   const [connected, setConnected] = React.useState(false);
+  const [testError, setTestError] = React.useState(null);
   const [selectedModel, setSelectedModel] = React.useState(() => matchModelId(settings?.defaultModelName));
 
   if (!open) return null;
 
-  const handleTest = () => {
+  const handleTest = async () => {
     setTesting(true);
-    setTimeout(() => { setTesting(false); setConnected(true); }, 1200);
+    setTestError(null);
+    setConnected(false);
+    try {
+      await testConnection(url);
+      setConnected(true);
+    } catch (err) {
+      setTestError(err?.message || String(err));
+      if (err?.hint) setTestError(prev => prev + '\n' + err.hint);
+    } finally {
+      setTesting(false);
+    }
   };
 
   const handleDone = () => {
@@ -109,6 +121,18 @@ export function OnboardingFlow({ open, onClose, settings, onSettingsChange }) {
                 animation:'cf-spin .8s linear infinite',
               }}/>
               <span style={{fontSize: 13, color:'var(--text-dim)'}}>Testing connection…</span>
+            </div>
+          )}
+
+          {testError && (
+            <div style={{
+              padding:'10px 12px', marginTop: 12, borderRadius: 8,
+              background:'oklch(0.30 0.12 25 / .15)', border:'1px solid oklch(0.45 0.18 25 / .35)',
+              color:'var(--bad)', fontSize: 12, lineHeight: 1.5,
+              whiteSpace:'pre-wrap', wordBreak:'break-word',
+            }}>
+              <strong style={{display:'block', marginBottom: 4}}>Couldn't reach ComfyUI</strong>
+              {testError}
             </div>
           )}
 
