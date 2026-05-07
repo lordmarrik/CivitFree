@@ -38,7 +38,7 @@ function VariantPersonalClassic() {
             </div>
             <div className="mode-pill">
               <span style={{flex:1, fontWeight: 500}}>Local pipeline</span>
-              <span className="mono mute" style={{fontSize: 10}}>diffusers · cuda</span>
+              <span className="mono mute" style={{fontSize: 10}}>ComfyUI · CUDA</span>
             </div>
           </div>
         </div>
