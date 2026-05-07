@@ -17,17 +17,14 @@ Status:
 
 ## 1. Mobile / responsive — "it looks like a phone but isn't a phone app"
 
-- [ ] 🔴 **Fixed-width 390 × 780 frame** doesn't adapt to real phone screens.
-      On a phone, the cute device frame floats centered with empty space
-      around it. Needs a small-screen breakpoint that drops the frame and
-      goes full-bleed.  _File: `src/styles.css` `.cf-frame`._
-- [ ] 🔴 **Notch / Dynamic Island / rounded corner overlap.** iOS phones
-      have non-rectangular displays. Content currently runs under the
-      notch. Needs `safe-area-inset-*` padding on the top bar and dock.
-- [ ] 🔴 **iOS Safari `100vh` quirk.** On iOS, `100vh` is taller than the
-      visible area because it doesn't subtract the address bar. Causes the
-      bottom dock to be hidden under browser chrome. Fix: use `100dvh` (or
-      a JS workaround for older iOS).
+- [x] 🔴 **Fixed-width 390 × 780 frame** doesn't adapt to real phone screens.
+      ✅ Responsive breakpoint at 767 px now drops the frame to full-bleed.
+      Desktop view still shows the framed mockup.
+- [x] 🔴 **Notch / Dynamic Island / rounded corner overlap.** ✅ Status bar,
+      top bar, and dock now respect `env(safe-area-inset-*)` on phones.
+      `viewport-fit=cover` set in `index.html`.
+- [x] 🔴 **iOS Safari `100vh` quirk.** ✅ `.cf-frame` and `.app-shell` now
+      use `100dvh` with `100vh` fallback.
 - [ ] 🟡 **Soft keyboard covers the prompt textarea.** When you tap the
       prompt input on a phone, the on-screen keyboard pops up and hides
       half the form including the Generate button. No handling.
@@ -44,11 +41,17 @@ Status:
 
 ## 2. "Add to home screen" / PWA — installable as an app icon
 
-- [ ] 🔴 **No `manifest.webmanifest`.** Without one, browsers won't offer
-      "Add to home screen" properly. Need name, icons, theme color, display
-      mode (`standalone`).
-- [ ] 🔴 **No app icons.** Generic web icon will appear on the home screen
-      instead of a CivitFree icon.
+- [x] 🔴 **No `manifest.webmanifest`.** ✅ Added at `public/manifest.webmanifest`
+      with name, icons, theme color, standalone display mode, portrait
+      orientation.
+- [x] 🟡 **No app icons.** ✅ SVG icon at `public/icon.svg` (CF in a magenta
+      gradient). Works for desktop/Android. **iOS still needs PNG raster
+      icons** (180/192/512) for proper "Add to Home Screen" — follow-up
+      below.
+- [ ] 🟡 **iOS PNG icons.** Apple Safari prefers raster PNG for the home
+      screen icon. Without them, iOS may use a screenshot. Needs a build
+      step or hand-exported PNGs at 180×180 (apple-touch-icon), 192×192,
+      and 512×512.
 - [ ] 🟡 **No splash screen.** Briefly shows a white screen on launch.
 - [ ] 🟢 **No service worker.** Means no offline capability and slower
       cold loads. Optional unless you want the app to work without internet
