@@ -159,7 +159,7 @@ function PickerSortRow() {
   );
 }
 
-export function ModelPicker({ open, onClose }) {
+export function ModelPicker({ open, onClose, onSelect }) {
   const [sourceTab, setSourceTab] = React.useState('local');
   const [browseTab, setBrowseTab] = React.useState('ALL');
   const [localTab, setLocalTab] = React.useState('ALL');
@@ -261,7 +261,17 @@ export function ModelPicker({ open, onClose }) {
             palette={m.palette}
             seed={m.seed}
             loaded={m.loaded}
-            onSelect={onClose}
+            onSelect={() => {
+              if (onSelect) {
+                onSelect({
+                  name: m.name,
+                  ver: m.ver,
+                  size: m.size,
+                  base: m.base,
+                });
+              }
+              onClose && onClose();
+            }}
           />
         ))}
       </div>

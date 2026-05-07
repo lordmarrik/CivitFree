@@ -1,12 +1,25 @@
 import React from 'react';
 import { Ic } from '../shared/icons.jsx';
 
-export function OnboardingFlow({ open, onClose }) {
+const ONBOARDING_MODELS = [
+  { id:'homosimile', name:'HomoSimile XL', ver:'v4.0', size:'6.4 GB', base:'SDXL' },
+  { id:'pony', name:'Pony Diffusion V6', ver:'v6.0', size:'5.8 GB', base:'SDXL' },
+  { id:'illustrious', name:'Illustrious XL', ver:'v0.1', size:'6.9 GB', base:'Illustrious' },
+  { id:'dreamshaper', name:'DreamShaper', ver:'v8.0', size:'2.1 GB', base:'SD 1.5' },
+];
+
+const matchModelId = (defaultModelName) => {
+  if (!defaultModelName) return 'homosimile';
+  const found = ONBOARDING_MODELS.find(m => defaultModelName.startsWith(m.name));
+  return found ? found.id : 'homosimile';
+};
+
+export function OnboardingFlow({ open, onClose, settings, onSettingsChange }) {
   const [step, setStep] = React.useState(1);
-  const [url, setUrl] = React.useState('http://192.168.1.42:8188');
+  const [url, setUrl] = React.useState(() => settings?.backendUrl ?? 'http://192.168.1.42:8188');
   const [testing, setTesting] = React.useState(false);
   const [connected, setConnected] = React.useState(false);
-  const [selectedModel, setSelectedModel] = React.useState('homosimile');
+  const [selectedModel, setSelectedModel] = React.useState(() => matchModelId(settings?.defaultModelName));
 
   if (!open) return null;
 
@@ -15,12 +28,18 @@ export function OnboardingFlow({ open, onClose }) {
     setTimeout(() => { setTesting(false); setConnected(true); }, 1200);
   };
 
-  const models = [
-    { id:'homosimile', name:'HomoSimile XL', ver:'v4.0', size:'6.4 GB', base:'SDXL' },
-    { id:'pony', name:'Pony Diffusion V6', ver:'v6.0', size:'5.8 GB', base:'SDXL' },
-    { id:'illustrious', name:'Illustrious XL', ver:'v0.1', size:'6.9 GB', base:'Illustrious' },
-    { id:'dreamshaper', name:'DreamShaper', ver:'v8.0', size:'2.1 GB', base:'SD 1.5' },
-  ];
+  const handleDone = () => {
+    if (onSettingsChange) {
+      const chosen = ONBOARDING_MODELS.find(m => m.id === selectedModel);
+      onSettingsChange({
+        backendUrl: url,
+        defaultModelName: chosen ? `${chosen.name} ${chosen.ver}` : settings?.defaultModelName,
+      });
+    }
+    onClose && onClose();
+  };
+
+  const models = ONBOARDING_MODELS;
 
   return (
     <div style={{
@@ -161,7 +180,7 @@ export function OnboardingFlow({ open, onClose }) {
           </div>
 
           <div style={{padding:'16px 0 24px'}}>
-            <button onClick={onClose} style={{
+            <button onClick={handleDone} style={{
               width:'100%', padding:'14px', borderRadius: 10,
               background:'var(--accent)', color:'white', fontWeight: 600, fontSize: 15,
             }}>Done — Start Creating</button>

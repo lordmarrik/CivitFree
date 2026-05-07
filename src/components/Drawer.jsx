@@ -1,7 +1,7 @@
 import React from 'react';
 import { Ic } from '../shared/icons.jsx';
 
-export function SideDrawer({ open, onClose }) {
+export function SideDrawer({ open, onClose, settings, onSettingsChange }) {
   const [screen, setScreen] = React.useState(null);
 
   React.useEffect(() => {
@@ -39,10 +39,16 @@ export function SideDrawer({ open, onClose }) {
       <div style={backdropStyles} onClick={onClose}/>
       <div style={panelStyles}>
         {!screen && <DrawerMain items={menuItems} onNav={setScreen} onClose={onClose}/>}
-        {screen === 'settings' && <DrawerSettings onBack={() => setScreen(null)}/>}
+        {screen === 'settings' && (
+          <DrawerSettings
+            onBack={() => setScreen(null)}
+            settings={settings}
+            onSettingsChange={onSettingsChange}
+          />
+        )}
         {screen === 'models' && <DrawerModelLibrary onBack={() => setScreen(null)}/>}
         {screen === 'loras' && <DrawerLoraManager onBack={() => setScreen(null)}/>}
-        {screen === 'about' && <DrawerAbout onBack={() => setScreen(null)}/>}
+        {screen === 'about' && <DrawerAbout onBack={() => setScreen(null)} settings={settings}/>}
       </div>
     </div>
   );
@@ -108,12 +114,35 @@ function DrawerMain({ items, onNav, onClose }) {
   );
 }
 
-function DrawerSettings({ onBack }) {
-  const [activeProfile, setActiveProfile] = React.useState('steubenville');
+const SAMPLER_OPTIONS = ['Euler a', 'Euler', 'DPM++ 2M', 'DPM++ 2M Karras', 'Heun', 'LCM'];
+const SCHEDULER_OPTIONS = ['Normal', 'Karras', 'Exponential', 'SGM Uniform', 'Simple'];
+const MODEL_OPTIONS = [
+  'HomoSimile XL v4.0',
+  'Pony Diffusion V6 v6.0',
+  'Illustrious XL v0.1',
+  'DreamShaper v8.0',
+  'Flux.1 Dev fp16',
+];
+const SIZE_OPTIONS = ['832×1216', '1024×1024', '1216×832', '768×1344', '1344×768'];
+
+function DrawerSettings({ onBack, settings, onSettingsChange }) {
+  const s = settings || {};
+  const set = (patch) => onSettingsChange && onSettingsChange(patch);
+
   const fieldStyle = {
     width:'100%', background:'var(--panel-2)', border:'1px solid var(--line)',
     borderRadius: 8, padding:'10px 12px', color:'var(--text)', fontSize: 13,
     fontFamily:'var(--font-mono)',
+  };
+  const selectStyle = {
+    ...fieldStyle,
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    paddingRight: 32,
+    backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ba1b0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 10px center',
   };
   const labelStyle = { fontSize: 12, fontWeight: 600, marginBottom: 6, color:'var(--text-dim)' };
 
@@ -125,11 +154,11 @@ function DrawerSettings({ onBack }) {
           <div style={labelStyle}>Backend Profile</div>
           <div style={{display:'flex', gap: 6}}>
             {[{id:'steubenville', label:'Steubenville PC'},{id:'columbus', label:'Columbus PC'}].map(p => (
-              <button key={p.id} onClick={() => setActiveProfile(p.id)} style={{
+              <button key={p.id} onClick={() => set({ backendProfile: p.id })} style={{
                 flex:1, padding:'10px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                background: activeProfile === p.id ? 'var(--accent-soft)' : 'var(--panel-2)',
-                border: `1px solid ${activeProfile === p.id ? 'var(--accent-line)' : 'var(--line)'}`,
-                color: activeProfile === p.id ? 'var(--accent)' : 'var(--text-dim)',
+                background: s.backendProfile === p.id ? 'var(--accent-soft)' : 'var(--panel-2)',
+                border: `1px solid ${s.backendProfile === p.id ? 'var(--accent-line)' : 'var(--line)'}`,
+                color: s.backendProfile === p.id ? 'var(--accent)' : 'var(--text-dim)',
                 textAlign:'center',
               }}>{p.label}</button>
             ))}
@@ -138,57 +167,103 @@ function DrawerSettings({ onBack }) {
 
         <div>
           <div style={labelStyle}>ComfyUI Backend URL</div>
-          <input style={fieldStyle} defaultValue="http://192.168.1.42:8188" readOnly/>
+          <input
+            style={fieldStyle}
+            value={s.backendUrl ?? ''}
+            onChange={e => set({ backendUrl: e.target.value })}
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
+          />
         </div>
 
         <div>
           <div style={labelStyle}>Default Model</div>
-          <div style={{...fieldStyle, display:'flex', alignItems:'center', justifyContent:'space-between', cursor:'pointer'}}>
-            <span>HomoSimile XL v4.0</span>
-            <Ic.ChevDown size={12} color="var(--text-dim)"/>
-          </div>
+          <select
+            style={selectStyle}
+            value={s.defaultModelName ?? ''}
+            onChange={e => set({ defaultModelName: e.target.value })}
+          >
+            {MODEL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
         </div>
 
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap: 8}}>
           <div>
             <div style={labelStyle}>Sampler</div>
-            <div style={{...fieldStyle, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-              <span>Euler a</span>
-              <Ic.ChevDown size={10} color="var(--text-dim)"/>
-            </div>
+            <select
+              style={selectStyle}
+              value={s.sampler ?? ''}
+              onChange={e => set({ sampler: e.target.value })}
+            >
+              {SAMPLER_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
           </div>
           <div>
             <div style={labelStyle}>Scheduler</div>
-            <div style={{...fieldStyle, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-              <span>Normal</span>
-              <Ic.ChevDown size={10} color="var(--text-dim)"/>
-            </div>
+            <select
+              style={selectStyle}
+              value={s.scheduler ?? ''}
+              onChange={e => set({ scheduler: e.target.value })}
+            >
+              {SCHEDULER_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
           </div>
         </div>
 
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap: 8}}>
           <div>
             <div style={labelStyle}>Steps</div>
-            <input style={{...fieldStyle, textAlign:'center'}} defaultValue="30" readOnly/>
+            <input
+              type="number" inputMode="numeric" min={1} max={150}
+              style={{...fieldStyle, textAlign:'center'}}
+              value={s.steps ?? 30}
+              onChange={e => set({ steps: Math.max(1, Math.min(150, parseInt(e.target.value || '1', 10))) })}
+            />
           </div>
           <div>
             <div style={labelStyle}>CFG</div>
-            <input style={{...fieldStyle, textAlign:'center'}} defaultValue="7" readOnly/>
+            <input
+              type="number" inputMode="decimal" min={1} max={30} step={0.5}
+              style={{...fieldStyle, textAlign:'center'}}
+              value={s.cfg ?? 7}
+              onChange={e => set({ cfg: Math.max(1, Math.min(30, parseFloat(e.target.value || '1'))) })}
+            />
           </div>
           <div>
             <div style={labelStyle}>Size</div>
-            <input style={{...fieldStyle, textAlign:'center'}} defaultValue="832×1216" readOnly/>
+            <select
+              style={{...selectStyle, textAlign:'center'}}
+              value={s.size ?? '832×1216'}
+              onChange={e => set({ size: e.target.value })}
+            >
+              {SIZE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
           </div>
         </div>
 
         <div>
           <div style={labelStyle}>Cloud GPU Credentials</div>
-          <input style={fieldStyle} defaultValue="sk-••••••••••••3f8a" readOnly/>
+          <input
+            style={fieldStyle}
+            type="password"
+            value={s.cloudGpuKey ?? ''}
+            onChange={e => set({ cloudGpuKey: e.target.value })}
+            placeholder="sk-…"
+            autoComplete="off"
+          />
         </div>
 
         <div>
           <div style={labelStyle}>CivitAI API Key</div>
-          <input style={fieldStyle} defaultValue="civ-••••••••••••a1f2" readOnly/>
+          <input
+            style={fieldStyle}
+            type="password"
+            value={s.civitaiKey ?? ''}
+            onChange={e => set({ civitaiKey: e.target.value })}
+            placeholder="civ-…"
+            autoComplete="off"
+          />
           <div className="mute" style={{fontSize: 10, marginTop: 4, lineHeight: 1.4}}>
             Required for Browse CivitAI, downloading gated models, and accessing your liked/saved resources
           </div>
@@ -196,12 +271,26 @@ function DrawerSettings({ onBack }) {
 
         <div>
           <div style={labelStyle}>PC Image Save Path</div>
-          <input style={fieldStyle} defaultValue="/home/user/civitfree/outputs" readOnly/>
+          <input
+            style={fieldStyle}
+            value={s.pcSavePath ?? ''}
+            onChange={e => set({ pcSavePath: e.target.value })}
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
+          />
         </div>
 
         <div>
           <div style={labelStyle}>Phone Download Path</div>
-          <input style={fieldStyle} defaultValue="/storage/emulated/0/CivitFree" readOnly/>
+          <input
+            style={fieldStyle}
+            value={s.phoneSavePath ?? ''}
+            onChange={e => set({ phoneSavePath: e.target.value })}
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
+          />
         </div>
       </div>
     </>
@@ -335,7 +424,16 @@ function DrawerLoraManager({ onBack }) {
   );
 }
 
-function DrawerAbout({ onBack }) {
+function DrawerAbout({ onBack, settings }) {
+  const backendUrlDisplay = (() => {
+    const raw = settings?.backendUrl ?? '';
+    try {
+      const u = new URL(raw);
+      return u.host + (u.pathname === '/' ? '' : u.pathname);
+    } catch {
+      return raw || '—';
+    }
+  })();
   const infoRow = (label, value, color) => (
     <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'1px solid var(--line-soft)'}}>
       <span style={{fontSize:13, color:'var(--text-dim)'}}>{label}</span>
@@ -362,8 +460,7 @@ function DrawerAbout({ onBack }) {
           {infoRow('GPU', 'NVIDIA RTX 3080')}
           {infoRow('VRAM', '10 GB')}
           {infoRow('ComfyUI', 'v0.3.10')}
-          {infoRow('Connection', 'Connected', 'var(--good)')}
-          {infoRow('Backend URL', '192.168.1.42:8188')}
+          {infoRow('Backend URL', backendUrlDisplay)}
         </div>
       </div>
     </>

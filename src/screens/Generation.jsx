@@ -11,20 +11,24 @@ export function VariantPersonalClassic({
   onTab,
   prompt,
   onPromptChange,
+  negativePrompt,
+  onNegativePromptChange,
   loras = [],
   onAddLora,
   onUpdateLoraStrength,
   onRemoveLora,
+  model,
+  onModelChange,
+  settings,
+  onSettingsChange,
 }) {
   const [modality, setModality] = React.useState('image');
   const [tab, setTab] = React.useState('t2i');
   const [aspect, setAspect] = React.useState('2:3');
-  const [cfgPreset, setCfgPreset] = React.useState('Creative');
-  const [stepsPreset, setStepsPreset] = React.useState('High');
-  const [samplerPreset, setSamplerPreset] = React.useState('Fast');
   const [seedMode, setSeedMode] = React.useState('Custom');
   const [cfg, setCfg] = React.useState(3);
   const [steps, setSteps] = React.useState(40);
+  const [sampler, setSampler] = React.useState('Euler a');
   const [clip, setClip] = React.useState(2);
   const [qty, setQty] = React.useState(2);
 
@@ -32,6 +36,16 @@ export function VariantPersonalClassic({
   const [modelPickerOpen, setModelPickerOpen] = React.useState(false);
   const [loraPickerOpen, setLoraPickerOpen] = React.useState(false);
   const [backendOpen, setBackendOpen] = React.useState(false);
+
+  const CFG_PRESETS = { Creative: 3, Balanced: 7, Precise: 12 };
+  const STEPS_PRESETS = { Fast: 20, Balanced: 30, High: 50 };
+  const SAMPLER_PRESETS = { Fast: 'Euler a', Popular: 'DPM++ 2M Karras' };
+
+  const cfgPreset = Object.keys(CFG_PRESETS).find(k => CFG_PRESETS[k] === cfg) || null;
+  const stepsPreset = Object.keys(STEPS_PRESETS).find(k => STEPS_PRESETS[k] === steps) || null;
+  const samplerPreset = Object.keys(SAMPLER_PRESETS).find(k => SAMPLER_PRESETS[k] === sampler) || null;
+
+  const safeModel = model || { name: 'HomoSimile XL', ver: 'v4.0', size: '6.4 GB', base: 'SDXL' };
 
   return (
     <div className="cf-frame">
@@ -139,8 +153,12 @@ export function VariantPersonalClassic({
           <div className="cf-model">
             <div className="thumb"/>
             <div className="meta">
-              <div className="name">HomoSimile XL</div>
-              <div className="ver">v4.0 · 6.4 GB · loaded</div>
+              <div className="name">{safeModel.name}</div>
+              <div className="ver">
+                {safeModel.ver}
+                {safeModel.size ? ` · ${safeModel.size}` : ''}
+                {' · '}{safeModel.base || 'loaded'}
+              </div>
             </div>
             <button onClick={() => setModelPickerOpen(true)} style={{background:'var(--cyan-soft)', color:'var(--cyan)', padding:'5px 10px', borderRadius:6, fontSize:11, fontWeight:600}}>Change</button>
           </div>
@@ -207,7 +225,12 @@ export function VariantPersonalClassic({
 
         <div className="cf-section">
           <SectionTitle>Negative Prompt</SectionTitle>
-          <input className="cf-input" defaultValue="(negative)"/>
+          <input
+            className="cf-input"
+            value={negativePrompt ?? ''}
+            onChange={e => onNegativePromptChange && onNegativePromptChange(e.target.value)}
+            placeholder="e.g. blurry, low quality, deformed"
+          />
         </div>
 
         <div className="cf-section">
@@ -229,16 +252,20 @@ export function VariantPersonalClassic({
               label="CFG Scale"
               presets={['Creative','Balanced','Precise']}
               presetValue={cfgPreset}
-              onPreset={setCfgPreset}
+              onPreset={(p) => setCfg(CFG_PRESETS[p])}
               slider={<SliderRow value={cfg} min={1} max={20} onChange={setCfg}/>}
             />
             <div>
               <div className="row between" style={{marginBottom: 10}}>
                 <div className="label">Sampler <Ic.Info size={13}/></div>
-                <Chips options={['Fast','Popular']} value={samplerPreset} onChange={setSamplerPreset}/>
+                <Chips
+                  options={['Fast','Popular']}
+                  value={samplerPreset}
+                  onChange={(p) => setSampler(SAMPLER_PRESETS[p])}
+                />
               </div>
               <div className="cf-input row between" style={{cursor:'pointer'}}>
-                <span>Euler a</span>
+                <span>{sampler}</span>
                 <Ic.ChevDown size={14} color="var(--text-dim)"/>
               </div>
             </div>
@@ -246,7 +273,7 @@ export function VariantPersonalClassic({
               label="Steps"
               presets={['Fast','Balanced','High']}
               presetValue={stepsPreset}
-              onPreset={setStepsPreset}
+              onPreset={(p) => setSteps(STEPS_PRESETS[p])}
               slider={<SliderRow value={steps} min={10} max={60} onChange={setSteps}/>}
             />
             <div>
@@ -256,7 +283,12 @@ export function VariantPersonalClassic({
                   <button className={seedMode==='Random'?'on':''} onClick={() => setSeedMode('Random')}>Random</button>
                   <button className={seedMode==='Custom'?'on':''} onClick={() => setSeedMode('Custom')}>Custom</button>
                 </div>
-                <input className="cf-input mono" style={{flex:1}} defaultValue="687051578"/>
+                <input
+                  className="cf-input mono"
+                  style={{flex:1}}
+                  placeholder={seedMode === 'Random' ? 'auto' : 'enter seed…'}
+                  disabled={seedMode === 'Random'}
+                />
               </div>
             </div>
             <ParamRow
@@ -272,8 +304,17 @@ export function VariantPersonalClassic({
       </div>
       <Dock label="Generate" personal etaSec={18} gpu="Cloud GPU" qty={qty} onQty={setQty} onGpuClick={() => setBackendOpen(true)}/>
 
-      <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}/>
-      <ModelPicker open={modelPickerOpen} onClose={() => setModelPickerOpen(false)}/>
+      <SideDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        settings={settings}
+        onSettingsChange={onSettingsChange}
+      />
+      <ModelPicker
+        open={modelPickerOpen}
+        onClose={() => setModelPickerOpen(false)}
+        onSelect={onModelChange}
+      />
       <LoraPicker
         open={loraPickerOpen}
         onClose={() => setLoraPickerOpen(false)}
