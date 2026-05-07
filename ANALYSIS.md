@@ -50,8 +50,8 @@ in `src/services/comfyClient.js` so the UI can actually generate.
 | Move/re-export personal components into `src/` with proper imports | ✅ **Done** — ported into `src/shared/`, `src/components/`, `src/screens/` |
 | Add a typed/stubbed ComfyUI client boundary | ✅ **Done** — `src/services/comfyClient.js` with JSDoc `BackendProfile` typedef |
 | Implement real ComfyUI workflow graph mutation | ❌ **Blocked** on the stubs in `src/services/comfyClient.js` |
-| Wire remaining placeholder buttons to app state | ⚠️ **Partial** — drawer, model/LoRA pickers, action sheet, backend switcher, sort/filter all wired; image action sheet's _Send to inpaint_ now navigates to Screen D, but run metadata and fullscreen image viewer are still missing |
-| Upgrade the LoRA loaded-state section with thumbnails, strength sliders, remove buttons | ❌ **Not started** — current Generation screen shows _None loaded · 312 available locally_ stub copy |
+| Wire remaining placeholder buttons to app state | ⚠️ **Partial** — drawer, model/LoRA pickers, action sheet, backend switcher, sort/filter all wired; LoRA picker's _Select_ now adds to the loaded list; image action sheet's _Send to inpaint_ navigates to Screen D with the source seed/palette; _Remix_ copies prompt back to Screen A. Run metadata and fullscreen image viewer are still missing |
+| Upgrade the LoRA loaded-state section with thumbnails, strength sliders, remove buttons | ✅ **Done** — `src/screens/Generation.jsx` renders `.cf-lora-row` per loaded LoRA |
 | Real pagination/virtual scrolling and cross-page selection persistence | ❌ **Not started** — feed renders 12 mock tiles |
 
 ## 4. Locked-spec compliance check
@@ -134,24 +134,25 @@ React plugin), ESLint flat config with the React plugin, and a CI job that runs
 
 Ordered by **unblock value**: each item assumes the previous is done.
 
-1. ~~**Port orphan personal `.jsx` files into `src/` as ES modules.**~~ ✅ Done in this branch.
-2. **Implement real ComfyUI transport.** Replace the six `notImplemented` stubs in
+1. ~~**Port orphan personal `.jsx` files into `src/` as ES modules.**~~ ✅ Done.
+2. ~~**Upgrade the LoRA loaded-state UI** + **wire cross-screen state** (LoRA picker
+   → loaded list, _Send to inpaint_ → Screen D source, _Remix_ → Screen A prompt).~~
+   ✅ Done.
+3. **Implement real ComfyUI transport.** Replace the six `notImplemented` stubs in
    `src/services/comfyClient.js` with `fetch` calls against `${baseUrl}` for
    `/prompt`, `/queue`, `/history`, `/view`. Keep the typed boundary intact so UI
    code stays transport-agnostic. Wire it from `src/screens/Generation.jsx` (Generate
-   button) and the queue/feed polling loop.
-3. **Upgrade the LoRA loaded-state UI.** Thumbnails, strength sliders, remove buttons
-   per the screenshot reference `Uploads/Screenshot_20260504_162956_Brave.png`. Edit
-   the `cf-add-empty` block in `src/screens/Generation.jsx`.
-4. **Run metadata + fullscreen image viewer.** Closes the "wire remaining placeholder
-   buttons" item from `CLAUDE.md`. The action sheet's _Send to inpaint_ now navigates
-   to Screen D; _Remix_ still needs to populate Screen A's prompt and seed.
+   button) and a queue/feed polling loop. Requires user's ComfyUI server reachable
+   from wherever the dev server runs.
+4. **Run metadata + fullscreen image viewer.** Tap any image to open a fullscreen
+   viewer with prompt/seed/sampler details. Closes the last "wire placeholder
+   buttons" gap from `CLAUDE.md`.
 5. **Pagination / virtual scrolling for the feed**, with cross-page selection
    persistence. Last open item from `CLAUDE.md` "Still to do".
 6. **Tooling baseline.** `vite.config.js` with `@vitejs/plugin-react`, ESLint flat
    config, GitHub Actions job running `npm run build` on PRs.
 
-Items 3–5 can be parallelized after item 2 lands.
+Items 4–6 can be parallelized after item 3 lands.
 
 ## 8. Files referenced
 

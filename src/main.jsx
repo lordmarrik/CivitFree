@@ -13,14 +13,41 @@ const screens = [
   { id: 'inpaint', label: 'D', title: 'Inpaint' },
 ];
 
+const DEFAULT_PROMPT = '';
+
 function App() {
   const [screen, setScreen] = useState('brush');
   const [onboardingOpen, setOnboardingOpen] = useState(false);
 
+  const [loras, setLoras] = useState([]);
+  const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
+  const [inpaintSource, setInpaintSource] = useState(null);
+
   const handleTab = (key) => {
     if (key === 'brush' || key === 'clock' || key === 'grid') setScreen(key);
   };
-  const goInpaint = () => setScreen('inpaint');
+
+  const addLora = (lora) => {
+    setLoras(prev => {
+      if (prev.some(l => l.id === lora.id)) return prev;
+      return [...prev, { ...lora, strength: lora.strength ?? 0.8 }];
+    });
+  };
+  const updateLoraStrength = (id, strength) => {
+    setLoras(prev => prev.map(l => l.id === id ? { ...l, strength } : l));
+  };
+  const removeLora = (id) => {
+    setLoras(prev => prev.filter(l => l.id !== id));
+  };
+
+  const remix = ({ prompt: p, seed } = {}) => {
+    if (p) setPrompt(p);
+    setScreen('brush');
+  };
+  const sendToInpaint = ({ seed, palette }) => {
+    setInpaintSource({ seed, palette });
+    setScreen('inpaint');
+  };
 
   return (
     <main className="app-shell">
@@ -28,9 +55,9 @@ function App() {
         <p className="eyebrow">CivitFree Personal</p>
         <h1>Local-first generation UI</h1>
         <p>
-          Mobile-first prototype shell for ComfyUI workflows. Hamburger opens the side drawer;
+          Mobile-first prototype for ComfyUI workflows. Hamburger opens the side drawer;
           Change/Add open model and LoRA pickers; the GPU pill swaps backend; image tile menus
-          provide remix and Send to inpaint. ComfyUI transport is stubbed.
+          remix or send to inpaint. ComfyUI transport is stubbed.
         </p>
       </section>
 
@@ -51,10 +78,37 @@ function App() {
         </button>
       </div>
 
-      {screen === 'brush' && <VariantPersonalClassic onTab={handleTab}/>}
-      {screen === 'clock' && <VariantPersonalQueue onTab={handleTab} onInpaint={goInpaint}/>}
-      {screen === 'grid' && <VariantPersonalFeed onTab={handleTab} onInpaint={goInpaint}/>}
-      {screen === 'inpaint' && <VariantPersonalInpaint onTab={handleTab}/>}
+      {screen === 'brush' && (
+        <VariantPersonalClassic
+          onTab={handleTab}
+          prompt={prompt}
+          onPromptChange={setPrompt}
+          loras={loras}
+          onAddLora={addLora}
+          onUpdateLoraStrength={updateLoraStrength}
+          onRemoveLora={removeLora}
+        />
+      )}
+      {screen === 'clock' && (
+        <VariantPersonalQueue
+          onTab={handleTab}
+          onSendToInpaint={sendToInpaint}
+          onRemix={remix}
+        />
+      )}
+      {screen === 'grid' && (
+        <VariantPersonalFeed
+          onTab={handleTab}
+          onSendToInpaint={sendToInpaint}
+          onRemix={remix}
+        />
+      )}
+      {screen === 'inpaint' && (
+        <VariantPersonalInpaint
+          onTab={handleTab}
+          source={inpaintSource}
+        />
+      )}
 
       {onboardingOpen && (
         <div style={{

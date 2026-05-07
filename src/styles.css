@@ -585,3 +585,37 @@ input, textarea, select { font: inherit; color: inherit; }
 .mono { font-family: var(--font-mono); }
 .dim { color: var(--text-dim); }
 .mute { color: var(--text-mute); }
+
+/* LoRA loaded-state row */
+.cf-lora-section-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .12em;
+  color: var(--text-mute); text-transform: uppercase;
+  margin: 4px 0 8px;
+}
+.cf-lora-row {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px; margin-bottom: 8px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.cf-lora-row .head { display: flex; align-items: center; gap: 10px; }
+.cf-lora-row .thumb {
+  width: 44px; height: 44px; border-radius: 6px;
+  overflow: hidden; position: relative; flex-shrink: 0;
+  background: var(--panel-3);
+}
+.cf-lora-row .meta { flex: 1; min-width: 0; }
+.cf-lora-row .name {
+  color: var(--cyan); font-weight: 600; font-size: 13px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cf-lora-row .ver {
+  color: var(--text-mute); font-family: var(--font-mono);
+  font-size: 11px; margin-top: 2px;
+}
+.cf-lora-row .remove {
+  width: 26px; height: 26px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); flex-shrink: 0;
+  transition: color .12s, background .12s;
+}
+.cf-lora-row .remove:hover { color: var(--bad); background: var(--panel-3); }

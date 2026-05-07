@@ -1,11 +1,12 @@
 import React from 'react';
 import { Ic } from '../shared/icons.jsx';
+import { FakeImg } from '../shared/mockImages.jsx';
 import { StatusBar, TopBar, Dock, SectionTitle } from '../shared/Shell.jsx';
 import { Chips, SliderRow } from '../shared/controls.jsx';
 import { SideDrawer } from '../components/Drawer.jsx';
 import { BackendSwitcher } from '../components/SortFilter.jsx';
 
-export function VariantPersonalInpaint({ onTab }) {
+export function VariantPersonalInpaint({ onTab, source }) {
   const [activeTab, setActiveTab] = React.useState('inpaint');
   const [tool, setTool] = React.useState('brush');
   const [size, setSize] = React.useState(48);
@@ -36,15 +37,19 @@ export function VariantPersonalInpaint({ onTab }) {
         {activeTab === 'inpaint' && (
           <>
             <div className="cf-paint">
-              <div className="layer" style={{
-                background:`
-                  radial-gradient(circle at 35% 30%, oklch(0.85 0.16 60) 0%, transparent 30%),
-                  radial-gradient(ellipse at 60% 70%, oklch(0.55 0.18 320) 0%, transparent 50%),
-                  linear-gradient(160deg, oklch(0.18 0.05 280), oklch(0.32 0.10 320) 60%, oklch(0.42 0.18 30))
-                `
-              }}>
-                <div style={{position:'absolute', inset:0, background:'repeating-linear-gradient(45deg, transparent 0 8px, rgba(0,0,0,.05) 8px 9px)'}}/>
-              </div>
+              {source ? (
+                <FakeImg palette={source.palette} seed={source.seed}/>
+              ) : (
+                <div className="layer" style={{
+                  background:`
+                    radial-gradient(circle at 35% 30%, oklch(0.85 0.16 60) 0%, transparent 30%),
+                    radial-gradient(ellipse at 60% 70%, oklch(0.55 0.18 320) 0%, transparent 50%),
+                    linear-gradient(160deg, oklch(0.18 0.05 280), oklch(0.32 0.10 320) 60%, oklch(0.42 0.18 30))
+                  `
+                }}>
+                  <div style={{position:'absolute', inset:0, background:'repeating-linear-gradient(45deg, transparent 0 8px, rgba(0,0,0,.05) 8px 9px)'}}/>
+                </div>
+              )}
 
               <svg className="layer" viewBox="0 0 300 400">
                 <defs>
@@ -63,7 +68,7 @@ export function VariantPersonalInpaint({ onTab }) {
               </svg>
 
               <div className="topbar">
-                <div className="pill"><Ic.Image size={12}/> source.png · 832×1216</div>
+                <div className="pill"><Ic.Image size={12}/> {source ? `seed ${source.seed} · 832×1216` : 'source.png · 832×1216'}</div>
                 <div style={{flex:1}}/>
                 <button className="pill"><Ic.Undo size={13}/></button>
                 <button className="pill"><Ic.Redo size={13}/></button>
@@ -157,7 +162,7 @@ export function VariantPersonalInpaint({ onTab }) {
               ))}
 
               <div className="topbar">
-                <div className="pill"><Ic.Image size={12}/> source.png · 832×1216</div>
+                <div className="pill"><Ic.Image size={12}/> {source ? `seed ${source.seed} · 832×1216` : 'source.png · 832×1216'}</div>
                 <div style={{flex:1}}/>
                 <button className="pill"><Ic.Maximize size={13}/></button>
               </div>
@@ -221,16 +226,20 @@ export function VariantPersonalInpaint({ onTab }) {
               margin:'12px', aspectRatio:'3/4', borderRadius: 14,
               overflow:'hidden', position:'relative', background:'var(--panel-3)',
             }}>
-              <div style={{
-                position:'absolute', inset: 0,
-                background:`
-                  radial-gradient(circle at 35% 30%, oklch(0.85 0.16 60) 0%, transparent 30%),
-                  radial-gradient(ellipse at 60% 70%, oklch(0.55 0.18 320) 0%, transparent 50%),
-                  linear-gradient(160deg, oklch(0.18 0.05 280), oklch(0.32 0.10 320) 60%, oklch(0.42 0.18 30))
-                `
-              }}>
-                <div style={{position:'absolute', inset:0, background:'repeating-linear-gradient(45deg, transparent 0 8px, rgba(0,0,0,.05) 8px 9px)'}}/>
-              </div>
+              {source ? (
+                <FakeImg palette={source.palette} seed={source.seed}/>
+              ) : (
+                <div style={{
+                  position:'absolute', inset: 0,
+                  background:`
+                    radial-gradient(circle at 35% 30%, oklch(0.85 0.16 60) 0%, transparent 30%),
+                    radial-gradient(ellipse at 60% 70%, oklch(0.55 0.18 320) 0%, transparent 50%),
+                    linear-gradient(160deg, oklch(0.18 0.05 280), oklch(0.32 0.10 320) 60%, oklch(0.42 0.18 30))
+                  `
+                }}>
+                  <div style={{position:'absolute', inset:0, background:'repeating-linear-gradient(45deg, transparent 0 8px, rgba(0,0,0,.05) 8px 9px)'}}/>
+                </div>
+              )}
               <div style={{
                 position:'absolute', top:10, left:10,
                 background:'rgba(11,13,18,.7)', backdropFilter:'blur(14px)',
@@ -239,7 +248,7 @@ export function VariantPersonalInpaint({ onTab }) {
                 fontFamily:'var(--font-mono)', color:'var(--text)',
                 display:'flex', alignItems:'center', gap: 6,
               }}>
-                <Ic.Image size={12}/> source.png · 832×1216
+                <Ic.Image size={12}/> {source ? `seed ${source.seed} · 832×1216` : 'source.png · 832×1216'}
               </div>
               <div style={{
                 position:'absolute', bottom:10, left:10, right:10,

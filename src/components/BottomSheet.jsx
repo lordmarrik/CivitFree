@@ -34,17 +34,25 @@ export function SheetItem({ icon, label, danger, onClick }) {
   );
 }
 
-export function ImageActionSheet({ open, onClose, seed, onInpaint }) {
+export function ImageActionSheet({ open, onClose, seed, palette, prompt, onInpaint, onRemix }) {
+  const fireRemix = (withSeed) => {
+    if (onRemix) onRemix({ prompt, seed: withSeed ? seed : undefined, palette });
+    onClose && onClose();
+  };
+  const fireInpaint = () => {
+    if (onInpaint) onInpaint({ seed, palette });
+    onClose && onClose();
+  };
   return (
     <BottomSheet open={open} onClose={onClose} title={seed ? `#${seed}` : 'Actions'}>
       <SheetSection label="Remix">
-        <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix" onClick={onClose}/>
-        <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix (with seed)" onClick={onClose}/>
+        <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix" onClick={() => fireRemix(false)}/>
+        <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix (with seed)" onClick={() => fireRemix(true)}/>
       </SheetSection>
       <SheetSection label="Image">
         <SheetItem icon={<Ic.Sparkle size={16}/>} label="Image Variations" onClick={onClose}/>
         <SheetItem icon={<Ic.Image size={16}/>} label="Image to Image" onClick={onClose}/>
-        <SheetItem icon={<Ic.Brush2 size={16}/>} label="Inpaint" onClick={() => { onInpaint && onInpaint(); onClose(); }}/>
+        <SheetItem icon={<Ic.Brush2 size={16}/>} label="Inpaint" onClick={fireInpaint}/>
         <SheetItem icon={<Ic.Wand size={16}/>} label="Face Fix" onClick={onClose}/>
         <SheetItem icon={<Ic.ChevUp size={16}/>} label="Upscale" onClick={onClose}/>
         <SheetItem icon={<Ic.Eraser size={16}/>} label="Remove Background" onClick={onClose}/>
