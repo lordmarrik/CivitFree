@@ -114,6 +114,154 @@ This is the giant remaining item. Once wired, several rows above stop
 being theoretical (loading states, error handling, image storage,
 queue history all get real).
 
+## 8. Per-screen interaction audit — what works vs what doesn't
+
+Walked the code screen by screen. Each item is a button or input that
+**looks tappable / interactive but doesn't actually do anything (yet)**.
+Severity reuses the same scheme — 🔴 actively misleading / 🟡 dead
+button / 🟢 hardcoded display only.
+
+### Screen A — Generate
+
+- [ ] 🟡 Bookmark icon (top right) — no handler.
+- [ ] 🟡 "Local pipeline · ComfyUI · CUDA" pill — looks tappable, isn't.
+- [ ] 🔴 Video and Music modality tabs — selectable, but no UI exists for
+      them. Tapping highlights the icon and shows the same Image UI.
+- [ ] 🔴 Img → Img tab: "Denoise strength 0.55" bar is a fake static
+      `<div>`, not an interactive slider.
+- [ ] 🔴 Img→Img / Inpaint / Upscale tabs: "Tap to choose" image picker
+      has no handler — you can't actually choose an image.
+- [ ] 🔴 Inpaint tab: hint text says "Tap Open editor…" but there is no
+      Open editor button.
+- [ ] 🔴 Upscale tab: 2× / 3× / 4× chips visually look interactive
+      (one is highlighted) but no handlers — you can't pick a different
+      multiplier.
+- [ ] 🔴 Model card: hardcoded "HomoSimile XL v4.0". The Change button
+      opens the picker, but selecting any model in the picker just closes
+      the sheet — the card never actually changes.
+- [ ] 🔴 Negative Prompt input has `defaultValue="(negative)"` — that
+      "(negative)" looks like debug text. Field is also uncontrolled, so
+      typing into it doesn't connect to anything.
+- [ ] 🟡 Output Settings: "PNG" and "High" chips have no handlers.
+- [ ] 🔴 Advanced → Sampler "Euler a" dropdown: looks like a dropdown,
+      doesn't open anything.
+- [ ] 🔴 Advanced → CFG / Steps / Sampler preset chips
+      (Creative/Balanced/Precise, Fast/Balanced/High, Fast/Popular):
+      tapping one highlights it but doesn't change the slider below it.
+      Two unconnected controls staring at each other.
+- [ ] 🔴 Advanced → Seed: `defaultValue="687051578"` is hardcoded;
+      tapping "Random" doesn't generate a random seed.
+- [ ] 🟡 Advanced → "Select VAE" button — no handler.
+- [ ] 🔴 **Generate button** (dock) — no handler. (Expected; needs
+      ComfyUI.)
+
+### Screen B — Queue
+
+- [ ] 🟢 The 3 run cards are hardcoded mock data. Whatever you do on
+      Screen A, Queue never reflects it. (Will be fixed by real ComfyUI
+      `/history`.)
+- [ ] 🔴 The "14:21 · running" status indicator spins forever — no
+      state ever finishes it.
+- [ ] 🟡 Run card head: Info (ⓘ) and Trash buttons — no handlers.
+- [ ] 🔴 Run card resource list `+` buttons — no handlers. Looks like
+      it should add the resource as a LoRA but doesn't.
+- [ ] 🟡 Per-image Download button — no handler.
+- [ ] 🟡 Sort row "Select all" + checkbox — visual only.
+- [ ] 🔴 Image action sheet items that just close: _Image Variations,
+      Image to Image, Face Fix, Upscale, Remove Background, Image to
+      Video, Download, Delete_. Eight items that look like distinct
+      actions but all do the same thing (nothing).
+
+### Screen C — Feed
+
+- [ ] 🟢 12 hardcoded `[palette, seed]` tiles. No real data flow.
+- [ ] Same dead handlers as Queue's FeedCard / action sheet (above).
+
+### Screen D — Inpaint editor
+
+- [ ] 🔴 Top bar shows the **brush icon highlighted as active**, but
+      brush is Screen A's icon. Even when you're on Screen D, the chrome
+      says "you're on A." Confusing.
+- [ ] 🔴 The mask "blob" on the canvas is a fixed, decorative SVG —
+      tapping brush/eraser/lasso/wand changes which tool icon is
+      highlighted but you can't actually paint. The mask doesn't change.
+- [ ] 🟡 Undo / Redo / Maximize buttons (canvas top bar) — no handlers.
+- [ ] 🔴 "Replace with" / "Fill with" textareas use `defaultValue` —
+      uncontrolled, typing doesn't persist anywhere.
+- [ ] 🟡 "Match source" / "Soft edges" output chips — no handlers.
+- [ ] 🟡 Outpaint direction summary chips at bottom (↑ Top / ↓ Bottom /
+      etc.) — visual only; the actual toggles are the arrow buttons
+      inside the canvas.
+- [ ] 🔴 Inpaint / Outpaint / Generate Variations dock buttons — no
+      handler. (Expected; needs ComfyUI.)
+
+### Drawer (hamburger menu)
+
+- [ ] 🔴 **Settings: every field is `readOnly`.** Backend Profile,
+      ComfyUI URL, default model, sampler, scheduler, steps, CFG, size,
+      Cloud GPU credentials, CivitAI API key, save paths — none of them
+      can be changed. The whole Settings screen is a display-only fake.
+- [ ] 🟡 Model Library: "Browse CivitAI" tab search input is a stub.
+- [ ] 🟡 LoRA Manager: "Browse CivitAI" tab search input is a stub.
+- [ ] 🟢 About: "Connected" status with green dot is hardcoded text,
+      regardless of actual connection.
+
+### Model Picker
+
+- [ ] 🔴 "Browse CivitAI" tab is fake — it's filtering a hardcoded
+      array of 4 names, not calling any API.
+- [ ] 🟡 Per-card Info (ⓘ) and More (⋯) buttons — no handlers.
+- [ ] 🔴 Top tabs (FAVORITE / RECENT / LOADED) highlight on tap but
+      don't actually filter the list.
+- [ ] 🟡 Sort row, Filters button, Settings gear (browse mode) — no
+      handlers.
+
+### LoRA Picker
+
+- [ ] Same pattern as Model Picker (Filter / Sort / Info / More dead).
+      Adding to the loaded list works (just shipped).
+
+### Onboarding flow
+
+- [ ] 🔴 **"Test Connection" is fake** — it always succeeds after a
+      1.2-second wait, regardless of the URL typed.
+- [ ] 🔴 The ComfyUI URL the user types is never saved anywhere.
+- [ ] 🔴 "Pick default model" choice is never saved.
+- [ ] 🔴 "Done — Start Creating" closes the modal, discarding everything.
+
+### Backend switcher (sheet from the dock GPU pill)
+
+- [ ] 🔴 Choosing Local GPU / Cloud GPU updates the sheet's local state,
+      but nothing else in the app reflects the choice. Generation
+      screen's dock still hardcodes `gpu="Cloud GPU"`.
+
+### Sort / Filter sheets
+
+- [ ] 🔴 Sort sheet: choosing Newest/Oldest doesn't actually re-sort
+      anything; the choice never leaves the sheet.
+- [ ] 🔴 Filter sheet: "Apply Filters" button closes the sheet without
+      filtering anything.
+
+### Top-level chrome
+
+- [ ] 🟢 StatusBar time "14:22" is hardcoded. Doesn't show real time.
+- [ ] 🔴 TopBar's "active screen" highlight is wrong on Screen D
+      (highlights brush instead of nothing or D).
+- [ ] 🟡 The "First-run setup" button in the screen-tabs row above the
+      phone is labeled just `·` (a dot). Unreadable.
+
+---
+
+That's roughly 50 distinct dead-or-misleading interactions across the
+app. The 🔴 ones are the highest priority because they actively lie to
+the user (button looks like it does something, doesn't). The 🟡 ones
+are honest "not done yet" gaps. The 🟢 ones are hardcoded display data
+that'll be replaced when the backend lands.
+
+Most 🔴 items in **Settings** and **Onboarding** are particularly
+important because they're how a real user would set up the app for the
+first time — and right now neither one persists anything they enter.
+
 ## How to use this file
 
 When we finish something, flip the `[ ]` to `[x]` in the same PR that
