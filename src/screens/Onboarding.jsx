@@ -22,6 +22,7 @@ export function OnboardingFlow({ open, onClose, settings, onSettingsChange, onMo
   const [connected, setConnected] = React.useState(false);
   const [testError, setTestError] = React.useState(null);
   const [selectedModel, setSelectedModel] = React.useState(() => matchModelId(settings?.defaultModelName));
+  const [checkpointFilename, setCheckpointFilename] = React.useState(() => settings?.checkpointFilename ?? '');
 
   if (!open) return null;
 
@@ -46,6 +47,7 @@ export function OnboardingFlow({ open, onClose, settings, onSettingsChange, onMo
       onSettingsChange({
         backendUrl: url,
         defaultModelName: chosen ? `${chosen.name} ${chosen.ver}` : settings?.defaultModelName,
+        checkpointFilename: checkpointFilename.trim(),
       });
     }
     if (onModelChange && chosen) {
@@ -58,6 +60,8 @@ export function OnboardingFlow({ open, onClose, settings, onSettingsChange, onMo
     }
     onClose && onClose();
   };
+
+  const canFinish = checkpointFilename.trim().length > 0;
 
   const models = ONBOARDING_MODELS;
 
@@ -211,11 +215,44 @@ export function OnboardingFlow({ open, onClose, settings, onSettingsChange, onMo
             ))}
           </div>
 
+          <div style={{paddingTop: 12}}>
+            <div style={{fontSize: 12, fontWeight: 600, color:'var(--text-dim)', marginBottom: 6}}>
+              Checkpoint filename
+            </div>
+            <input
+              style={{
+                width:'100%', background:'var(--panel)', border:'1px solid var(--line)',
+                borderRadius: 10, padding:'12px 14px', color:'var(--text)', fontSize: 14,
+                fontFamily:'var(--font-mono)',
+              }}
+              value={checkpointFilename}
+              onChange={e => setCheckpointFilename(e.target.value)}
+              placeholder="e.g. dreamshaperXL_v85.safetensors"
+              spellCheck={false}
+              autoCapitalize="off"
+              autoCorrect="off"
+            />
+            <div className="mute" style={{fontSize: 10, marginTop: 4, lineHeight: 1.4}}>
+              Exact filename from your ComfyUI <code>models/checkpoints/</code> folder.
+              Required so generation matches the model you picked above.
+            </div>
+          </div>
+
           <div style={{padding:'16px 0 24px'}}>
-            <button onClick={handleDone} style={{
-              width:'100%', padding:'14px', borderRadius: 10,
-              background:'var(--accent)', color:'white', fontWeight: 600, fontSize: 15,
-            }}>Done — Start Creating</button>
+            <button
+              onClick={canFinish ? handleDone : undefined}
+              disabled={!canFinish}
+              style={{
+                width:'100%', padding:'14px', borderRadius: 10,
+                background: canFinish ? 'var(--accent)' : 'var(--panel-3)',
+                color: canFinish ? 'white' : 'var(--text-mute)',
+                fontWeight: 600, fontSize: 15,
+                opacity: canFinish ? 1 : 0.6,
+                cursor: canFinish ? 'pointer' : 'not-allowed',
+              }}
+            >
+              Done — Start Creating
+            </button>
           </div>
         </div>
       )}
