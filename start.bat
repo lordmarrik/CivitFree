@@ -16,9 +16,13 @@ if errorlevel 1 (
   exit /b 1
 )
 
-if not exist node_modules (
+REM Re-run npm install if node_modules is missing OR if a previous
+REM install was interrupted before completion. npm writes
+REM node_modules\.package-lock.json on a successful install, so its
+REM absence is a reliable "this folder is half-installed" signal.
+if not exist node_modules\.package-lock.json (
   echo.
-  echo First-time setup: installing dependencies. This takes a minute.
+  echo Installing or repairing dependencies. This takes a minute.
   echo.
   call npm install
   if errorlevel 1 (
