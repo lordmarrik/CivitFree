@@ -64,6 +64,7 @@ function RunCard({ run, baseUrl, onImageAction, onRunRemix }) {
         <span className="time">{time || run.promptId.slice(0, 8)}</span>
         {run.status === 'success' && <span className="time" style={{color:'var(--good)'}}>· done</span>}
         {run.status === 'running' && <span className="status"/>}
+        {run.status === 'queued' && <span className="time" style={{color:'var(--warn)'}}>· queued</span>}
         {run.status === 'error' && <span className="time" style={{color:'var(--bad)'}}>· error</span>}
         <div className="actions">
           <button onClick={() => onRunRemix && onRunRemix(run)} aria-label="Remix run"><Ic.Refresh size={14}/></button>
