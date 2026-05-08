@@ -15,6 +15,14 @@ that are wrong, missing, or untested) is in `READINESS.md`.
 
 ## Run it
 
+**Easy mode (Windows / Mac / Linux)** — double-click `start.bat`
+(Windows) or run `./start.sh` (Mac / Linux). On first run it installs
+dependencies; on subsequent runs it just starts the dev server and
+opens the app in your browser. Requires [Node.js LTS](https://nodejs.org/)
+installed.
+
+**Manual:**
+
 ```sh
 npm install
 npm run dev    # http://localhost:5173 (or 0.0.0.0:5173 for LAN)
