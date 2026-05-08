@@ -96,8 +96,8 @@ Legacy reference (do not extend):
   of the page when "Add to Home Screen" is used. Generate the PNGs from
   the SVG and add them to `public/`, then re-add the
   `<link rel="apple-touch-icon">` and PNG manifest entries.
-- **Real model / LoRA listing** — `comfyClient.listCheckpoints` and
-  `listLoras` work, but neither is wired into the UI yet. Until then,
-  type the checkpoint filename in Settings, and assume LoRA names match
-  real filenames.
+- **Real model / LoRA listing** — done. ModelPicker, LoraPicker, and
+  the onboarding step 2 list all fetch from
+  `/object_info/CheckpointLoaderSimple` and `/object_info/LoraLoader`.
+  Selected items carry their real filename through to generation.
 - See `READINESS.md` for the full list.

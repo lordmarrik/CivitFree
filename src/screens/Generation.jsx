@@ -73,13 +73,13 @@ export function VariantPersonalClassic({
   const handleGenerate = async () => {
     setGenError(null);
     const baseUrl = settings?.backendUrl;
-    const checkpoint = settings?.checkpointFilename;
+    const checkpoint = (model && model.filename) || settings?.checkpointFilename;
     if (!baseUrl) {
       setGenError('Set the ComfyUI backend URL in Settings first.');
       return;
     }
     if (!checkpoint) {
-      setGenError('Set the Checkpoint filename in Settings first (the actual file in your ComfyUI models/checkpoints folder).');
+      setGenError('Pick a checkpoint via the Model card (Change → list from your ComfyUI), or type a filename in Settings.');
       return;
     }
     if (!prompt || !prompt.trim()) {
@@ -463,11 +463,14 @@ export function VariantPersonalClassic({
         open={modelPickerOpen}
         onClose={() => setModelPickerOpen(false)}
         onSelect={onModelChange}
+        baseUrl={settings?.backendUrl}
+        currentFilename={safeModel?.filename || settings?.checkpointFilename}
       />
       <LoraPicker
         open={loraPickerOpen}
         onClose={() => setLoraPickerOpen(false)}
         onSelect={onAddLora}
+        baseUrl={settings?.backendUrl}
       />
       <BackendSwitcher open={backendOpen} onClose={() => setBackendOpen(false)}/>
     </div>
