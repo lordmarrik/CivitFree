@@ -71,13 +71,13 @@ Status:
 - [x] 🔴 **Onboarding URL not saved.** ✅ "Done — Start Creating" now
       writes the URL and the picked default model into the persisted
       `settings` object.
-- [ ] 🟡 **No queue history.** Mock runs are hardcoded; real generations
-      would need somewhere to live (likely IndexedDB or the ComfyUI
-      `/history` endpoint).
-- [ ] 🟡 **Generated images have no storage strategy.** Once we wire
-      ComfyUI, where do images go? Options: ComfyUI-hosted URLs (re-fetch
-      every time, brittle), download into IndexedDB (durable, big), use
-      the device's gallery (best, needs Save File API).
+- [x] 🟡 **No queue history.** ✅ Queue + Feed now read from ComfyUI's
+      own `/history` endpoint, so generations survive page reloads
+      and tab switches via the server's storage. Polling every 4 s.
+- [ ] 🟡 **Generated images have no local storage strategy.** Images
+      are served live from `/view`; if ComfyUI restarts or the user
+      goes offline, they're gone. Downloading into IndexedDB or
+      saving to the device gallery is still a follow-up.
 
 ## 4. Error handling — "things break and it just sits there"
 
@@ -173,14 +173,18 @@ button / 🟢 hardcoded display only.
 
 ### Screen B — Queue
 
-- [ ] 🟢 The 3 run cards are hardcoded mock data. Whatever you do on
-      Screen A, Queue never reflects it. (Will be fixed by real ComfyUI
-      `/history`.)
-- [ ] 🔴 The "14:21 · running" status indicator spins forever — no
-      state ever finishes it.
+- [x] 🟢 ✅ Run cards now come from ComfyUI's `/history` endpoint via
+      `useComfyHistory` (polled every 4 s). Empty / loading / error
+      states are explicit. Times are shown as relative (`5s ago`,
+      `12m ago`, etc.) from the entry's status messages. Status badge
+      shows _done_ / _running_ / _error_ based on the actual run.
+- [x] 🔴 ✅ The eternal-running spinner is gone — status reflects real
+      data, so completed runs show "done" and only actually-running
+      ones show the spinner.
 - [ ] 🟡 Run card head: Info (ⓘ) and Trash buttons — no handlers.
-- [ ] 🔴 Run card resource list `+` buttons — no handlers. Looks like
-      it should add the resource as a LoRA but doesn't.
+- [x] 🔴 ✅ Run card resource list now displays real LoRA filenames
+      pulled from each entry's workflow graph instead of the mock list.
+      The `+` button is gone with the mock UI.
 - [ ] 🟡 Per-image Download button — no handler.
 - [ ] 🟡 Sort row "Select all" + checkbox — visual only.
 - [x] 🔴 Image action sheet items that just close: ✅ unwired items now
@@ -190,7 +194,10 @@ button / 🟢 hardcoded display only.
 
 ### Screen C — Feed
 
-- [ ] 🟢 12 hardcoded `[palette, seed]` tiles. No real data flow.
+- [x] 🟢 ✅ Tiles are now real images flattened from ComfyUI's
+      `/history` (newest-first). Each tile renders the actual
+      `<img>` from `/view?filename=...`. Tap ⋮ to remix or send to
+      inpaint, with the tile's prompt + seed carried through.
 - [ ] Same dead handlers as Queue's FeedCard / action sheet (above).
 
 ### Screen D — Inpaint editor

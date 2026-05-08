@@ -13,6 +13,7 @@ import {
   extractImagesFromHistory,
 } from '../services/comfyClient.js';
 import { buildTextToImageWorkflow, randomSeed } from '../services/buildWorkflow.js';
+import { usePersisted } from '../shared/usePersisted.js';
 
 export function VariantPersonalClassic({
   onTab,
@@ -68,7 +69,10 @@ export function VariantPersonalClassic({
 
   const [generating, setGenerating] = React.useState(false);
   const [genError, setGenError] = React.useState(null);
-  const [latestResult, setLatestResult] = React.useState(null);
+  // latestResult is persisted so it survives tab switches and refresh.
+  // The Queue/Feed screens are the canonical home for past runs (they
+  // poll /history); this card is a quick "hot result" for Screen A.
+  const [latestResult, setLatestResult] = usePersisted('latestResult', null);
 
   const handleGenerate = async () => {
     setGenError(null);
@@ -127,8 +131,9 @@ export function VariantPersonalClassic({
       }
       setLatestResult({
         images: images.map(img => ({
-          url: comfyImageUrl(baseUrl, img),
           filename: img.filename,
+          type: img.type,
+          subfolder: img.subfolder,
         })),
         seed,
         prompt,
@@ -158,12 +163,16 @@ export function VariantPersonalClassic({
           </div>
         )}
 
-        {latestResult && (
+        {latestResult && latestResult.images && latestResult.images.length > 0 && (
           <div className="cf-section" style={{paddingTop: 12, paddingBottom: 0}}>
             <div className="cf-result-card">
               <div className={latestResult.images.length > 1 ? 'images grid' : 'images'}>
                 {latestResult.images.map((img, i) => (
-                  <img key={img.filename + i} src={img.url} alt={`Result ${i + 1} · seed ${latestResult.seed}`}/>
+                  <img
+                    key={img.filename + i}
+                    src={comfyImageUrl(settings?.backendUrl, img)}
+                    alt={`Result ${i + 1} · seed ${latestResult.seed}`}
+                  />
                 ))}
               </div>
               <div className="meta">
