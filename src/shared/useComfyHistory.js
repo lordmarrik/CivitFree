@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import { listHistory } from '../services/comfyClient.js';
-import { parseHistory } from '../services/historyParser.js';
+import { listHistory, listQueue } from '../services/comfyClient.js';
+import { parseHistory, parseQueue, mergeQueueAndHistory } from '../services/historyParser.js';
 
 /**
- * Polls /history while enabled. Returns
+ * Polls /history and /queue while enabled. Returns
  *   { runs, loading, error, reload }
  *
- * runs: ParsedRun[] sorted newest-first.
- * loading: only true on the very first fetch (subsequent polls are silent).
- * error: only set if the most recent fetch failed.
+ * runs: combined newest-first list. Currently-running jobs come first,
+ * then queued/pending, then completed. Each entry is a ParsedRun.
+ * loading: only true on the very first fetch.
+ * error: only set if the most recent fetch round failed.
  */
 export function useComfyHistory(baseUrl, { enabled = true, intervalMs = 4000 } = {}) {
   const [runs, setRuns] = useState([]);
@@ -26,9 +27,17 @@ export function useComfyHistory(baseUrl, { enabled = true, intervalMs = 4000 } =
     const tick = async () => {
       if (firstAttempt) setLoading(true);
       try {
-        const map = await listHistory(baseUrl);
+        // /queue is small + per-tick critical for active runs to feel
+        // responsive; /history is bigger but only changes on completion.
+        // Run them in parallel.
+        const [queueData, historyMap] = await Promise.all([
+          listQueue(baseUrl),
+          listHistory(baseUrl),
+        ]);
         if (cancelled) return;
-        setRuns(parseHistory(map));
+        const queueRuns = parseQueue(queueData);
+        const historyRuns = parseHistory(historyMap);
+        setRuns(mergeQueueAndHistory(queueRuns, historyRuns));
         setError(null);
         setHasFetched(true);
       } catch (err) {

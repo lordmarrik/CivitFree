@@ -157,6 +157,88 @@ export function parseHistory(historyMap) {
 }
 
 /**
+ * Parse one /queue entry. Each entry is an array
+ *   [number, prompt_id, workflow, extra_data, outputs_to_execute]
+ * (same shape as the `prompt` field on a /history entry, but no
+ * outputs/status yet because the job isn't done).
+ *
+ * `status` should be 'running' or 'queued'.
+ */
+export function parseQueueEntry(arr, status) {
+  if (!Array.isArray(arr) || arr.length < 3) return null;
+  const promptId = arr[1];
+  const workflow = arr[2];
+
+  const ks = findNodeByClass(workflow, 'KSampler') || findNodeByClass(workflow, 'KSamplerAdvanced');
+  const ksInputs = ks?.[1]?.inputs ?? {};
+  const empty = findNodeByClass(workflow, 'EmptyLatentImage');
+  const emptyInputs = empty?.[1]?.inputs ?? {};
+
+  return {
+    promptId,
+    startedAt: status === 'running' ? Date.now() : null,
+    completedAt: null,
+    status,
+    prompt: resolveTextNode(workflow, ksInputs.positive) || '',
+    negPrompt: resolveTextNode(workflow, ksInputs.negative) || '',
+    sampler: ksInputs.sampler_name ?? '',
+    scheduler: ksInputs.scheduler ?? '',
+    cfg: typeof ksInputs.cfg === 'number' ? ksInputs.cfg : 0,
+    steps: typeof ksInputs.steps === 'number' ? ksInputs.steps : 0,
+    seed: typeof ksInputs.seed === 'number' ? ksInputs.seed : 0,
+    width: typeof emptyInputs.width === 'number' ? emptyInputs.width : 0,
+    height: typeof emptyInputs.height === 'number' ? emptyInputs.height : 0,
+    images: [],
+    loraNames: collectLoras(workflow),
+  };
+}
+
+/**
+ * Parse a /queue response { queue_running, queue_pending } into an
+ * array of run objects with appropriate status fields.
+ */
+export function parseQueue(queueData) {
+  if (!queueData || typeof queueData !== 'object') return [];
+  const out = [];
+  for (const arr of (queueData.queue_running || [])) {
+    const r = parseQueueEntry(arr, 'running');
+    if (r) out.push(r);
+  }
+  for (const arr of (queueData.queue_pending || [])) {
+    const r = parseQueueEntry(arr, 'queued');
+    if (r) out.push(r);
+  }
+  return out;
+}
+
+/**
+ * Merge queue + history into one newest-first list, deduping by
+ * promptId in case ComfyUI briefly reports a job in both. Order:
+ * running > queued > completed (newest-first within each group).
+ */
+export function mergeQueueAndHistory(queueRuns, historyRuns) {
+  const seen = new Set();
+  const out = [];
+  const sections = ['running', 'queued', 'success'];
+  const all = [...(queueRuns || []), ...(historyRuns || [])];
+  // Stable sort: bucket by status group, then within each, newest-first.
+  const grouped = { running: [], queued: [], rest: [] };
+  for (const r of all) {
+    if (seen.has(r.promptId)) continue;
+    seen.add(r.promptId);
+    if (r.status === 'running') grouped.running.push(r);
+    else if (r.status === 'queued') grouped.queued.push(r);
+    else grouped.rest.push(r);
+  }
+  const byTime = (a, b) => (b.completedAt ?? b.startedAt ?? 0) - (a.completedAt ?? a.startedAt ?? 0);
+  grouped.running.sort(byTime);
+  grouped.queued.sort(byTime);
+  grouped.rest.sort(byTime);
+  out.push(...grouped.running, ...grouped.queued, ...grouped.rest);
+  return out;
+}
+
+/**
  * Quick palette index for a deterministic-but-friendly color tied to a
  * filename (used by the feed/queue cards as a fallback when we can't
  * actually fetch the thumbnail yet).

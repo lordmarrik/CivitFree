@@ -179,6 +179,18 @@ export async function listHistory(baseUrl) {
 }
 
 /**
+ * Fetch the current queue. Returns { queue_running, queue_pending },
+ * each an array of [number, prompt_id, prompt, extra_data,
+ * outputs_to_execute] entries (same shape as the `prompt` field on
+ * /history entries).
+ */
+export async function listQueue(baseUrl) {
+  const url = normalizeBaseUrl(baseUrl);
+  if (!url) throw new ComfyError('No backend URL configured.');
+  return await callJson(`${url}/queue`);
+}
+
+/**
  * Build a /view URL for a generated image. Used as <img src=…>.
  */
 export function imageUrl(baseUrl, { filename, type = 'output', subfolder = '' } = {}) {
