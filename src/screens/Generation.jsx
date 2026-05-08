@@ -6,14 +6,8 @@ import { Chips, SliderRow, ParamRow, CollapsibleCard, AspectRatioRow } from '../
 import { SideDrawer } from '../components/Drawer.jsx';
 import { ModelPicker, LoraPicker } from '../components/ModelPicker.jsx';
 import { BackendSwitcher } from '../components/SortFilter.jsx';
-import {
-  submitWorkflow,
-  waitForResult,
-  imageUrl as comfyImageUrl,
-  extractImagesFromHistory,
-} from '../services/comfyClient.js';
+import { submitWorkflow, waitForResult } from '../services/comfyClient.js';
 import { buildTextToImageWorkflow, randomSeed } from '../services/buildWorkflow.js';
-import { usePersisted } from '../shared/usePersisted.js';
 
 export function VariantPersonalClassic({
   onTab,
@@ -69,10 +63,6 @@ export function VariantPersonalClassic({
 
   const [generating, setGenerating] = React.useState(false);
   const [genError, setGenError] = React.useState(null);
-  // latestResult is persisted so it survives tab switches and refresh.
-  // The Queue/Feed screens are the canonical home for past runs (they
-  // poll /history); this card is a quick "hot result" for Screen A.
-  const [latestResult, setLatestResult] = usePersisted('latestResult', null);
 
   const handleGenerate = async () => {
     setGenError(null);
@@ -125,20 +115,12 @@ export function VariantPersonalClassic({
       const submitRes = await submitWorkflow(baseUrl, workflow);
       const promptId = submitRes.prompt_id;
       const history = await waitForResult(baseUrl, promptId);
-      const images = extractImagesFromHistory(history);
-      if (images.length === 0) {
-        throw new Error('Generation finished but ComfyUI returned no images.');
+      const outputs = history?.outputs ?? {};
+      if (Object.keys(outputs).length === 0) {
+        throw new Error('Generation finished but ComfyUI returned no outputs.');
       }
-      setLatestResult({
-        images: images.map(img => ({
-          filename: img.filename,
-          type: img.type,
-          subfolder: img.subfolder,
-        })),
-        seed,
-        prompt,
-        promptId,
-      });
+      // Result is now visible on Screen B (Queue) and Screen C (Feed)
+      // via the /history poll. Nothing to display inline.
     } catch (err) {
       const msg = err?.message || String(err);
       const hint = err?.hint ? `\n${err.hint}` : '';
@@ -159,33 +141,6 @@ export function VariantPersonalClassic({
               <strong>Generate failed</strong>
               <span>{genError}</span>
               <button onClick={() => setGenError(null)} aria-label="Dismiss"><Ic.X size={14}/></button>
-            </div>
-          </div>
-        )}
-
-        {latestResult && latestResult.images && latestResult.images.length > 0 && (
-          <div className="cf-section" style={{paddingTop: 12, paddingBottom: 0}}>
-            <div className="cf-result-card">
-              <div className={latestResult.images.length > 1 ? 'images grid' : 'images'}>
-                {latestResult.images.map((img, i) => (
-                  <img
-                    key={img.filename + i}
-                    src={comfyImageUrl(settings?.backendUrl, img)}
-                    alt={`Result ${i + 1} · seed ${latestResult.seed}`}
-                  />
-                ))}
-              </div>
-              <div className="meta">
-                <span className="label">
-                  {latestResult.images.length > 1
-                    ? `Latest results · ${latestResult.images.length} images`
-                    : 'Latest result'}
-                </span>
-                <span className="seed mono">seed {latestResult.seed}</span>
-                <button onClick={() => setLatestResult(null)} className="dismiss" aria-label="Dismiss result">
-                  <Ic.X size={14}/>
-                </button>
-              </div>
             </div>
           </div>
         )}
