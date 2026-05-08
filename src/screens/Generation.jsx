@@ -67,7 +67,11 @@ export function VariantPersonalClassic({
   const handleGenerate = async () => {
     setGenError(null);
     const baseUrl = settings?.backendUrl;
-    const checkpoint = (model && model.filename) || settings?.checkpointFilename;
+    // Settings drawer's "Checkpoint filename" field is the authoritative
+    // override — picking via ModelPicker writes through to it via
+    // App.updateModel, and a manual edit there should also win. Fall
+    // back to model.filename only if settings doesn't have one yet.
+    const checkpoint = (settings?.checkpointFilename || '').trim() || (model && model.filename) || '';
     if (!baseUrl) {
       setGenError('Set the ComfyUI backend URL in Settings first.');
       return;
@@ -428,7 +432,7 @@ export function VariantPersonalClassic({
         onClose={() => setModelPickerOpen(false)}
         onSelect={onModelChange}
         baseUrl={settings?.backendUrl}
-        currentFilename={safeModel?.filename || settings?.checkpointFilename}
+        currentFilename={(settings?.checkpointFilename || '').trim() || safeModel?.filename}
       />
       <LoraPicker
         open={loraPickerOpen}
