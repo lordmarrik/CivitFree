@@ -11,9 +11,13 @@ if ! command -v npm >/dev/null 2>&1; then
   exit 1
 fi
 
-if [ ! -d node_modules ]; then
+# Re-run npm install if node_modules is missing OR if a previous
+# install was interrupted before completion. npm writes
+# node_modules/.package-lock.json on a successful install, so its
+# absence is a reliable "this folder is half-installed" signal.
+if [ ! -f node_modules/.package-lock.json ]; then
   echo
-  echo "First-time setup: installing dependencies. This takes a minute."
+  echo "Installing or repairing dependencies. This takes a minute."
   echo
   npm install || {
     echo
