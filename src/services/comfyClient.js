@@ -169,6 +169,16 @@ export async function pollHistory(baseUrl, promptId) {
 }
 
 /**
+ * Fetch the full /history map. Returns the raw object keyed by
+ * prompt_id (each value is a history entry). Order is server-defined.
+ */
+export async function listHistory(baseUrl) {
+  const url = normalizeBaseUrl(baseUrl);
+  if (!url) throw new ComfyError('No backend URL configured.');
+  return await callJson(`${url}/history`);
+}
+
+/**
  * Build a /view URL for a generated image. Used as <img src=…>.
  */
 export function imageUrl(baseUrl, { filename, type = 'output', subfolder = '' } = {}) {
