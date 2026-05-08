@@ -15,7 +15,7 @@ const matchModelId = (defaultModelName) => {
   return found ? found.id : 'homosimile';
 };
 
-export function OnboardingFlow({ open, onClose, settings, onSettingsChange }) {
+export function OnboardingFlow({ open, onClose, settings, onSettingsChange, onModelChange }) {
   const [step, setStep] = React.useState(1);
   const [url, setUrl] = React.useState(() => settings?.backendUrl ?? 'http://192.168.1.42:8188');
   const [testing, setTesting] = React.useState(false);
@@ -41,11 +41,19 @@ export function OnboardingFlow({ open, onClose, settings, onSettingsChange }) {
   };
 
   const handleDone = () => {
+    const chosen = ONBOARDING_MODELS.find(m => m.id === selectedModel);
     if (onSettingsChange) {
-      const chosen = ONBOARDING_MODELS.find(m => m.id === selectedModel);
       onSettingsChange({
         backendUrl: url,
         defaultModelName: chosen ? `${chosen.name} ${chosen.ver}` : settings?.defaultModelName,
+      });
+    }
+    if (onModelChange && chosen) {
+      onModelChange({
+        name: chosen.name,
+        ver: chosen.ver,
+        size: chosen.size,
+        base: chosen.base,
       });
     }
     onClose && onClose();

@@ -22,7 +22,10 @@ Status:
       Desktop view still shows the framed mockup.
 - [x] 🔴 **Notch / Dynamic Island / rounded corner overlap.** ✅ Status bar,
       top bar, and dock now respect `env(safe-area-inset-*)` on phones.
-      `viewport-fit=cover` set in `index.html`.
+      `viewport-fit=cover` set in `index.html`. (Codex caught a CSS
+      cascade bug where the responsive @media block came before the
+      base rules and was silently overridden — fixed by moving it to
+      the end of the stylesheet.)
 - [x] 🔴 **iOS Safari `100vh` quirk.** ✅ `.cf-frame` and `.app-shell` now
       use `100dvh` with `100vh` fallback.
 - [ ] 🟡 **Soft keyboard covers the prompt textarea.** When you tap the

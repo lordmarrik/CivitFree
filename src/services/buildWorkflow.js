@@ -28,6 +28,7 @@ export function randomSeed() {
  * @param {number} args.steps
  * @param {number} args.seed
  * @param {string} args.size                   - "WIDTH×HEIGHT"
+ * @param {number} [args.batchSize]            - number of images per submit
  * @param {Array<{filename:string, strength:number}>} [args.loras]
  * @param {string} [args.filenamePrefix]
  */
@@ -41,6 +42,7 @@ export function buildTextToImageWorkflow({
   steps,
   seed,
   size,
+  batchSize = 1,
   loras = [],
   filenamePrefix = 'civitfree',
 }) {
@@ -79,7 +81,7 @@ export function buildTextToImageWorkflow({
   // 4: Empty latent canvas
   graph['4'] = {
     class_type: 'EmptyLatentImage',
-    inputs: { width, height, batch_size: 1 },
+    inputs: { width, height, batch_size: Math.max(1, batchSize | 0) },
   };
 
   // 5: Positive prompt

@@ -47,6 +47,7 @@ function App() {
   const [loras, setLoras] = usePersisted('loras', []);
   const [model, setModel] = usePersisted('model', DEFAULT_MODEL);
   const [settings, setSettings] = usePersisted('settings', DEFAULT_SETTINGS);
+  const [pendingSeed, setPendingSeed] = useState(null);
 
   const handleTab = (key) => {
     if (key === 'brush' || key === 'clock' || key === 'grid') setScreen(key);
@@ -55,11 +56,11 @@ function App() {
   const addLora = (lora) => {
     setLoras(prev => {
       if (prev.some(l => l.id === lora.id)) return prev;
-      return [...prev, { ...lora, strength: lora.strength ?? 0.8 }];
+      return [...prev, { ...lora, strength: lora.strength ?? 0.8, filename: lora.filename ?? '' }];
     });
   };
-  const updateLoraStrength = (id, strength) => {
-    setLoras(prev => prev.map(l => l.id === id ? { ...l, strength } : l));
+  const updateLora = (id, patch) => {
+    setLoras(prev => prev.map(l => l.id === id ? { ...l, ...patch } : l));
   };
   const removeLora = (id) => {
     setLoras(prev => prev.filter(l => l.id !== id));
@@ -69,9 +70,15 @@ function App() {
     setSettings(prev => ({ ...prev, ...patch }));
   };
 
-  const remix = ({ prompt: p } = {}) => {
+  const remix = ({ prompt: p, seed } = {}) => {
     if (p) setPrompt(p);
+    setPendingSeed(typeof seed === 'number' ? seed : null);
     setScreen('brush');
+  };
+  const consumePendingSeed = () => {
+    const s = pendingSeed;
+    setPendingSeed(null);
+    return s;
   };
   const sendToInpaint = ({ seed, palette }) => {
     setInpaintSource({ seed, palette });
@@ -116,12 +123,14 @@ function App() {
           onNegativePromptChange={setNegativePrompt}
           loras={loras}
           onAddLora={addLora}
-          onUpdateLoraStrength={updateLoraStrength}
+          onUpdateLora={updateLora}
           onRemoveLora={removeLora}
           model={model}
           onModelChange={setModel}
           settings={settings}
           onSettingsChange={updateSettings}
+          pendingSeed={pendingSeed}
+          consumePendingSeed={consumePendingSeed}
         />
       )}
       {screen === 'clock' && (
@@ -164,6 +173,7 @@ function App() {
               onClose={() => setOnboardingOpen(false)}
               settings={settings}
               onSettingsChange={updateSettings}
+              onModelChange={setModel}
             />
           </div>
         </div>
