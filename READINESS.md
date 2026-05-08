@@ -226,19 +226,27 @@ button / 🟢 hardcoded display only.
 
 ### Model Picker
 
-- [ ] 🟡 "Browse CivitAI" tab is fake — it's filtering a hardcoded
-      array of 4 names, not calling any API. (Local "Select" now
-      actually changes Screen A's model.)
+- [x] 🟡 Local tab now fetches real checkpoint filenames from
+      `/object_info/CheckpointLoaderSimple`. Loading / error /
+      empty states all visible. Selecting a real entry emits its
+      `filename` and updates Screen A's model card + persisted
+      `settings.checkpointFilename` together.
+- [ ] 🟡 "Browse CivitAI" tab is still a stub (banner notes it
+      explicitly now). Wiring real CivitAI search is its own task.
 - [ ] 🟡 Per-card Info (ⓘ) and More (⋯) buttons — no handlers.
-- [ ] 🟡 Top tabs (FAVORITE / RECENT / LOADED) highlight on tap but
-      don't actually filter the list.
+- [ ] 🟡 Top tabs (FAVORITE / RECENT / LOADED) — removed from the
+      Local tab now that the real list is the source of truth; the
+      tabs are gone, not lying.
 - [ ] 🟡 Sort row, Filters button, Settings gear (browse mode) — no
       handlers.
 
 ### LoRA Picker
 
-- [ ] Same pattern as Model Picker (Filter / Sort / Info / More dead).
-      Adding to the loaded list works (just shipped).
+- [x] 🟡 Local tab now fetches real LoRA filenames from
+      `/object_info/LoraLoader`. Selecting an entry adds it to the
+      loaded list with its real filename pre-filled, so generation
+      no longer fails on missing filenames.
+- [ ] 🟡 Filter / Sort / Info / More buttons still inert.
 
 ### Onboarding flow
 

@@ -70,6 +70,16 @@ function App() {
     setSettings(prev => ({ ...prev, ...patch }));
   };
 
+  // ModelPicker / Onboarding emit { name, ver, size, base, filename }.
+  // Persist the model AND mirror filename into settings.checkpointFilename
+  // so the workflow builder always has a real checkpoint to use.
+  const updateModel = (m) => {
+    setModel(m);
+    if (m?.filename) {
+      setSettings(prev => ({ ...prev, checkpointFilename: m.filename }));
+    }
+  };
+
   const remix = ({ prompt: p, seed } = {}) => {
     if (p) setPrompt(p);
     setPendingSeed(typeof seed === 'number' ? seed : null);
@@ -126,7 +136,7 @@ function App() {
           onUpdateLora={updateLora}
           onRemoveLora={removeLora}
           model={model}
-          onModelChange={setModel}
+          onModelChange={updateModel}
           settings={settings}
           onSettingsChange={updateSettings}
           pendingSeed={pendingSeed}
@@ -173,7 +183,7 @@ function App() {
               onClose={() => setOnboardingOpen(false)}
               settings={settings}
               onSettingsChange={updateSettings}
-              onModelChange={setModel}
+              onModelChange={updateModel}
             />
           </div>
         </div>
