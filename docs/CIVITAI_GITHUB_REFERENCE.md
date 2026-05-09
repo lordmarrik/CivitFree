@@ -17,29 +17,29 @@ This repo's mockup should use Civitai as a behavioral reference, but we should t
 
 1. Civitai is a full Next.js + tRPC + Prisma + Postgres application with Mantine UI and Cloudflare storage. CivitFree should not attempt to mirror that architecture; its scope remains a local-first React + ComfyUI client.
 2. Upstream local development explicitly lists orchestration/generation as a service that does not work locally without external input. That means the GitHub repo explains UI behavior and data shapes, but it is not a drop-in local ComfyUI backend.
-3. Upstream generation is moving toward a graph/controller model. Controls render only when the active workflow/ecosystem exposes that graph node. For CivitFree, this translates to: show only controls we actually send to ComfyUI, or visibly disable/badge them. It does **not** mean CivitFree must copy upstream defaults, presets, ordering, or tuning choices.
+3. Upstream generation is moving toward a graph/controller model. Controls render only when the active workflow/ecosystem exposes that graph node. For CivitFree, this translates to: keep roadmap controls visible but badge them as coming soon unless we actually send them to ComfyUI. It does **not** mean CivitFree must copy upstream defaults, presets, ordering, or tuning choices.
 4. Upstream tracks resources used by generated images. Queue/feed cards in CivitFree should keep showing checkpoint, LoRA, strength, seed, dimensions, sampler, and source prompt metadata rather than just image URLs.
 
 ## Control-by-control mapping for CivitFree
 
 | CivitFree area | Upstream behavior reference | What it means here |
 | --- | --- | --- |
-| Image / Video / Music top tabs | Upstream generation graph supports image, video, and audio workflows with workflow-specific controllers. | Keep Image active. Hide or badge Video/Music until CivitFree has real ComfyUI workflows for those modes. |
+| Image / Video / Music top tabs | Upstream generation graph supports image, video, and audio workflows with workflow-specific controllers. | Keep Image active. Keep Video/Music visible with soon badges until CivitFree has real ComfyUI workflows for those modes. |
 | Text-to-image prompt | Prompt is a first-class graph controller; some ecosystems also expose prompt enhancement and trained words. | Current prompt field is valid. Prompt enhancement should be future work, not a fake button. |
-| Negative prompt | Upstream notes this is SD-only. | Keep for SD checkpoint workflows; if Flux/other ecosystems are added, conditionally hide or disable it. |
+| Negative prompt | Upstream notes this is SD-only. | Keep for SD checkpoint workflows; if Flux/other ecosystems are added, conditionally mark or adjust it. |
 | Model selector | Upstream treats checkpoint/model as the primary generation resource and changes compatible workflow/ecosystem behavior. | CivitFree's local checkpoint picker is conceptually correct. Next step is compatibility metadata, not a Civitai-style account model browser. |
 | LoRA / resources | Upstream additional resources are separate generation resources and are tracked on images. | Current local LoRA list should continue to feed the ComfyUI LoRA chain and history parser. Add base-model compatibility warnings before adding Civitai browsing. |
-| Output Settings: PNG | Upstream has an `outputFormat` controller. | CivitFree's PNG chip should either set SaveImage/output handling if ComfyUI supports alternate formats, or be disabled/badged. |
-| Output Settings: High | Upstream has priority/quality/pro/draft controls depending on workflow and membership/ecosystem. | Do not imply cloud priority. For local ComfyUI, map this to concrete steps/size presets or remove it. |
+| Output Settings: PNG | Upstream has an `outputFormat` controller. | CivitFree's PNG chip stays visible with a soon badge unless SaveImage/output handling supports alternate formats. |
+| Output Settings: High | Upstream has priority/quality/pro/draft controls depending on workflow and membership/ecosystem. | Removed: this represented Civitai shared-queue priority and does not belong in the local-first UI. |
 | Aspect ratio / size | Upstream derives aspect ratios from generation config per ecosystem/resolution. | CivitFree's size chips should drive width/height exactly and be validated per model family. |
-| CFG scale | Upstream Advanced uses a slider with presets and an info label. | Current CFG control is technically aligned because it feeds KSampler, but CivitFree may later choose different labels, ranges, defaults, or model-family-specific guidance. |
-| Sampler | Upstream Advanced uses a real select input with sampler presets and maps Civitai names to Comfy sampler/scheduler values. | Replace the inert Sampler dropdown display with a real picker, but treat `samplerMap.js` and ComfyUI support as local truth. CivitFree can diverge from upstream sampler presentation. |
-| Scheduler | Upstream has a scheduler controller for some ecosystems. | CivitFree currently hides scheduler; okay unless exposing non-normal/karras scheduling as a real Comfy input. Scheduler UX/defaults are an intentional future design choice, not something inherited from Civitai. |
-| Steps | Upstream Advanced uses a slider with presets. | Current steps UI is technically aligned because it feeds KSampler, but CivitFree may later use different step presets, ranges, model-specific recommendations, or simplified modes. |
+| CFG scale | Upstream Advanced uses a slider with presets and an info label. | CivitFree keeps CFG as a direct KSampler control and intentionally removes Civitai-style preset chips. |
+| Sampler | Upstream Advanced uses a real select input with sampler presets and maps Civitai names to Comfy sampler/scheduler values. | Use a real picker and remove Fast/Popular shortcut chips; treat `samplerMap.js` and ComfyUI support as local truth. |
+| Scheduler | Upstream has a scheduler controller for some ecosystems. | CivitFree currently keeps scheduler in Settings; okay unless exposing non-normal/karras scheduling as a Generate-screen input. Scheduler UX/defaults are an intentional future design choice, not something inherited from Civitai. |
+| Steps | Upstream Advanced uses a slider with presets. | CivitFree keeps Steps as a direct KSampler control and intentionally removes preset chips. |
 | Seed | Upstream Advanced uses SeedInput for reproducibility. | Custom seed must be wired into workflow generation; random mode should generate and display the actual submitted seed. |
 | CLIP Skip | Upstream exposes CLIP Skip only for SD workflows. | Not currently in CivitFree. Add later only if workflow builder supports it. |
 | Denoise | Upstream exposes denoise for img2img only. | Do not show for txt2img; required for real img2img/inpaint later. |
-| VAE | Upstream uses a resource select input and only renders where supported. | Current Select VAE button should be disabled/badged until the Comfy workflow can load a selected VAE. |
+| VAE | Upstream uses a resource select input and only renders where supported. | Current Select VAE button should stay visible with a soon badge until the Comfy workflow can load a selected VAE. |
 | Queue / Feed | Upstream statuses distinguish pending, completed, failed/expired/canceled and image cards retain generation metadata/resources. | CivitFree should keep polling ComfyUI queue/history and preserve metadata in cards/action sheets. |
 | Remix / remix with seed | Upstream uses remix store/state to seed a new generation from prior metadata. | Current remix actions are directionally right; verify prompt, resources, size, sampler, CFG, steps, and seed transfer. |
 | Inpaint / image editing | Upstream image edit workflows are workflow-specific and can enable drawing/source-image inputs. | CivitFree's Screen D should be considered incomplete until it has a real mask/source-image workflow builder and drawing mask data. |
@@ -65,8 +65,8 @@ Before adding features, make CivitFree follow the upstream rule: **a control sho
 
 Recommended order:
 
-1. Wire Custom Seed and real Sampler selection because these are core reproducibility controls and CivitFree already has ComfyUI workflow inputs for them; do not assume Civitai's exact presets/defaults are the desired long-term UX.
-2. Disable or badge Output Format, High, VAE, Video, Music, Sort, Filter, and Inpaint actions until they are real.
+1. Wire Custom Seed and real Sampler selection because these are core reproducibility controls and CivitFree already has ComfyUI workflow inputs for them; do not assume Civitai's exact presets/defaults or shortcut chips are the desired long-term UX.
+2. Keep Output Format, VAE, Video, Music, Sort, Filter, and Inpaint actions visible with soon badges until they are real; keep High removed.
 3. Keep Queue/Feed metadata-rich and make remix transfer all relevant generation parameters.
 4. Defer Civitai browsing/API integration. The public REST API is useful for model metadata and downloads, but CivitFree's immediate backend remains local ComfyUI.
 

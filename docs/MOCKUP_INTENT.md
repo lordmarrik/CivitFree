@@ -17,7 +17,7 @@ Everything else should be understood as either:
 - a **real control** that must affect the ComfyUI workflow/history state,
 - a **navigation affordance** into one of those flows,
 - a **metadata filter/view control** over local history,
-- or a **future workflow** that should be badged/disabled until implemented.
+- or a **future workflow** that should stay visible as a coming-soon roadmap item until implemented.
 
 ## Global shell
 
@@ -30,7 +30,7 @@ Everything else should be understood as either:
 | Grid icon | Feed/gallery screen. | Real top-level route backed by ComfyUI history images. |
 | Dock GPU row | Backend/profile/status selector plus ETA/status summary. | For local CivitFree this should show selected ComfyUI endpoint/profile and actual availability if known; avoid fake cloud priority semantics. |
 | Dock quantity | Batch size/count for the next submission. | For txt2img this maps to ComfyUI batch size. For variations it maps to number of variations. |
-| Dock primary button | Submit the current workflow. | Must be disabled or marked coming soon when the active workflow has no real builder. |
+| Dock primary button | Submit the current workflow. | Must be blocked from submitting and marked coming soon when the active workflow has no real builder. |
 
 ## Generate screen
 
@@ -38,7 +38,7 @@ Everything else should be understood as either:
 
 | Mockup element | Supposed to be | CivitFree behavior |
 | --- | --- | --- |
-| Image / Video / Music modality tabs | Select the media generation family. Civitai supports multiple workflow families; CivitFree currently only has image workflows. | Image should be enabled. Video/Music should be hidden, disabled, or clearly marked future until real ComfyUI video/audio workflows exist. |
+| Image / Video / Music modality tabs | Select the media generation family. Civitai supports multiple workflow families; CivitFree currently only has image workflows. | Image should be enabled. Video/Music should stay visible with soon badges until real ComfyUI video/audio workflows exist. |
 | Local pipeline pill | Indicates which backend/runtime will execute the workflow. | Should reflect the selected local ComfyUI backend/profile, not hardcoded CUDA/cloud language unless detected/configured. |
 | Text → Image tab | Pure txt2img workflow: prompt + model/resources + sampler params produce new images. | This is the current supported happy path. |
 | Image → Image tab | Source image + prompt + denoise controls reinterpret the input image. | Future ComfyUI img2img workflow requiring image upload/reference and denoise wiring. |
@@ -60,19 +60,19 @@ Everything else should be understood as either:
 | Mockup element | Supposed to be | CivitFree behavior |
 | --- | --- | --- |
 | Prompt | Positive prompt text sent into the workflow. | Real required field. |
-| Negative Prompt | Negative conditioning for SD-style workflows. | Real for SD/SDXL-style workflows; hide or adjust later for model families where negative prompt is not applicable. |
+| Negative Prompt | Negative conditioning for SD-style workflows. | Real for SD/SDXL-style workflows; mark or adjust later for model families where negative prompt is not applicable. |
 | Aspect Ratio | User-friendly size preset. | Real: maps to width/height. Later: make options model-family-aware. |
-| PNG chip | Output format control. | Future unless SaveImage/output format is actually configurable. Disable/badge if PNG is merely the only current behavior. |
-| High chip | Quality/priority preset. | Should not mean Civitai cloud priority. For local use, either map to concrete steps/size/sampler settings or remove/badge. |
+| PNG chip | Output format control. | Visible coming-soon/fixed-format reminder unless SaveImage/output format becomes configurable. |
+| High chip | Removed. | This was Civitai shared-queue priority semantics and should not exist in the local-first UI. |
 
 ### Advanced generation controls
 
 | Mockup element | Supposed to be | CivitFree behavior |
 | --- | --- | --- |
 | CFG Scale | Conditioning strength / prompt adherence control. | Real KSampler input. Defaults/ranges/preset names may diverge from Civitai later. |
-| Sampler preset chips | Fast/common sampler shortcuts. | Real only if they change sampler/scheduler inputs. Preserve freedom to choose different local presets than Civitai. |
-| Sampler dropdown | Full sampler picker. | Should become a real picker sourced from supported ComfyUI sampler mappings/options. |
-| Steps | Number of denoising steps. | Real KSampler input. Defaults/ranges/presets can diverge by model family/hardware. |
+| Sampler shortcut chips | Removed. | Fast/Popular Civitai-style shortcuts are intentionally removed; use one deliberate sampler picker. |
+| Sampler dropdown | Full sampler picker. | Real picker sourced from supported ComfyUI sampler mappings/options. |
+| Steps | Number of denoising steps. | Real KSampler input. Civitai-style preset chips are removed; ranges/defaults can diverge by model family/hardware. |
 | Seed Random/Custom | Reproducibility control. Random generates a new seed; Custom submits the typed seed. | Must be wired so custom seed changes the workflow, and submitted seed is visible in Queue/Feed. |
 | CLIP Skip | SD-family CLIP layer skip. | Future/conditional. It should only appear if the workflow builder actually inserts the required ComfyUI node(s). |
 | VAE selector | Optional VAE override resource. | Future/conditional. It should only appear if the workflow can load and route a selected VAE. |
@@ -136,7 +136,7 @@ Everything else should be understood as either:
 | Variations tab | Generate multiple variations from a source image. | Requires img2img/variation workflow. |
 | Variation quantity | Number of variation outputs. | Real batch/count for variations workflow. |
 | Prompt override | Optional prompt replacing or augmenting original prompt. | Should be sent to variations workflow if provided. |
-| Editor dock button | Submit Inpaint/Outpaint/Variations workflow. | Must be disabled/badged until each workflow is real. |
+| Editor dock button | Submit Inpaint/Outpaint/Variations workflow. | Must be blocked from submitting and badged until each workflow is real. |
 
 ## Drawer and settings
 
@@ -163,7 +163,7 @@ Everything else should be understood as either:
 | On your ComfyUI tab | Lists local checkpoints/LoRAs from ComfyUI object info. | Real. This is the default local-first path. |
 | Browse CivitAI tab | Search remote Civitai models/resources. | Future. Requires API key for gated/personalized features and download/install workflow. |
 | Search | Filters current source list. | Real for local list; future for remote API. |
-| ALL/FEATURED/RECENT/LIKED/MINE | Remote browse categories. | Future Civitai API categories; hide/disable unless remote browsing is active. |
+| ALL/FEATURED/RECENT/LIKED/MINE | Remote browse categories. | Future Civitai API categories; keep visibly marked as coming soon unless remote browsing is active. |
 | Relevance sort / filters / gear | Remote browse sorting/filtering/settings. | Future. Local mode could instead sort by filename/date/family if metadata exists. |
 | Picker cards | Resource previews/metadata cards. | Local cards are filename-derived placeholders now; later should include real metadata/previews where available. |
 
@@ -181,7 +181,7 @@ Everything else should be understood as either:
 
 ## Implementation priority implied by the mockup
 
-1. **Make current txt2img controls honest and complete:** custom seed, real sampler dropdown, scheduler visibility/choice, accurate backend label, and unsupported-control badges.
+1. **Make current txt2img controls honest and complete:** custom seed, real sampler picker, scheduler visibility/choice, accurate backend label, removed Civitai priority/preset chips, and visible coming-soon badges.
 2. **Make Queue/Feed actions meaningful:** richer remix metadata transfer, image download, favorites, sorting, and filtering.
 3. **Implement source-image workflows in order:** img2img first, then inpaint with real mask drawing, then upscale, then variations/outpaint.
 4. **Add resource metadata:** model family/base compatibility, LoRA compatibility warnings, local previews where available.

@@ -53,17 +53,17 @@ export function TopBar({ active = 'brush', settings = false, onTab, personal = f
   );
 }
 
-export function Dock({ qty = 2, price = 5, label = 'Generate', personal = false, etaSec, gpu, onGpuClick, onQty, onGenerate, generating = false }) {
+export function Dock({ qty = 2, price = 5, label = 'Generate', personal = false, etaSec, gpu, status = 'idle', onGpuClick, onQty, onGenerate, generating = false }) {
   return (
     <div className="cf-dock">
       <div className="cf-dock-row1" onClick={personal ? onGpuClick : undefined} style={personal ? {cursor:'pointer'} : undefined}>
         {personal ? (
           <>
-            <span className="mono mute" style={{fontSize: 11}}>{gpu || 'Cloud GPU'}</span>
+            <span className="mono mute" style={{fontSize: 11}}>{gpu || 'Local ComfyUI'}</span>
             <span className="cf-link" style={{color:'var(--text-dim)'}}>·</span>
-            <span className="mono" style={{fontSize: 11, color: 'var(--good)'}}>idle</span>
+            <span className="mono" style={{fontSize: 11, color: status === 'soon' ? 'var(--warn)' : 'var(--good)'}}>{status}</span>
             <div style={{flex:1}}/>
-            <span className="mono mute" style={{fontSize: 11}}>~{etaSec || 18}s</span>
+            {etaSec != null && <span className="mono mute" style={{fontSize: 11}}>~{etaSec}s</span>}
           </>
         ) : (
           <>

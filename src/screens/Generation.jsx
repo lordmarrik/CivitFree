@@ -2,12 +2,19 @@ import React from 'react';
 import { Ic } from '../shared/icons.jsx';
 import { FakeImg } from '../shared/mockImages.jsx';
 import { StatusBar, TopBar, Dock, SectionTitle } from '../shared/Shell.jsx';
-import { Chips, SliderRow, ParamRow, CollapsibleCard, AspectRatioRow } from '../shared/controls.jsx';
+import { SliderRow, ParamRow, CollapsibleCard, AspectRatioRow } from '../shared/controls.jsx';
 import { SideDrawer } from '../components/Drawer.jsx';
 import { ModelPicker, LoraPicker } from '../components/ModelPicker.jsx';
+import { BottomSheet, SheetSection } from '../components/BottomSheet.jsx';
 import { BackendSwitcher } from '../components/SortFilter.jsx';
 import { submitWorkflow, waitForResult } from '../services/comfyClient.js';
 import { buildTextToImageWorkflow, randomSeed } from '../services/buildWorkflow.js';
+import { SAMPLER_OPTIONS } from '../services/samplerMap.js';
+
+
+function SoonBadge() {
+  return <span className="cf-soon-badge">soon</span>;
+}
 
 export function VariantPersonalClassic({
   onTab,
@@ -28,14 +35,17 @@ export function VariantPersonalClassic({
 }) {
   const [modality, setModality] = React.useState('image');
   const [tab, setTab] = React.useState('t2i');
-  const [seedMode, setSeedMode] = React.useState('Custom');
-  const [clip, setClip] = React.useState(2);
+  const [seedMode, setSeedMode] = React.useState('Random');
+  const [seedInput, setSeedInput] = React.useState('');
+  const [clip] = React.useState(2);
   const [qty, setQty] = React.useState(2);
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [modelPickerOpen, setModelPickerOpen] = React.useState(false);
   const [loraPickerOpen, setLoraPickerOpen] = React.useState(false);
   const [backendOpen, setBackendOpen] = React.useState(false);
+  const [samplerOpen, setSamplerOpen] = React.useState(false);
+  const [soonNote, setSoonNote] = React.useState(null);
 
   // Generation params live in settings (single source of truth shared
   // with the Settings drawer); these helpers read/write through props.
@@ -51,21 +61,34 @@ export function VariantPersonalClassic({
   const aspect = SIZE_TO_ASPECT[settings?.size] ?? null;
   const setAspect = (a) => onSettingsChange && onSettingsChange({ size: ASPECT_TO_SIZE[a] });
 
-  const CFG_PRESETS = { Creative: 3, Balanced: 7, Precise: 12 };
-  const STEPS_PRESETS = { Fast: 20, Balanced: 30, High: 50 };
-  const SAMPLER_PRESETS = { Fast: 'Euler a', Popular: 'DPM++ 2M Karras' };
-
-  const cfgPreset = Object.keys(CFG_PRESETS).find(k => CFG_PRESETS[k] === cfg) || null;
-  const stepsPreset = Object.keys(STEPS_PRESETS).find(k => STEPS_PRESETS[k] === steps) || null;
-  const samplerPreset = Object.keys(SAMPLER_PRESETS).find(k => SAMPLER_PRESETS[k] === sampler) || null;
 
   const safeModel = model || { name: 'HomoSimile XL', ver: 'v4.0', size: '6.4 GB', base: 'SDXL' };
 
   const [generating, setGenerating] = React.useState(false);
   const [genError, setGenError] = React.useState(null);
 
+  React.useEffect(() => {
+    if (typeof pendingSeed === 'number' && Number.isFinite(pendingSeed)) {
+      setSeedMode('Custom');
+      setSeedInput(String(pendingSeed));
+    }
+  }, [pendingSeed]);
+
+  const markSoon = (label) => {
+    setSoonNote(`${label} is coming soon. Text→Image is the only wired workflow right now.`);
+  };
+
+  const selectFutureTab = (nextTab, label) => {
+    setTab(nextTab);
+    markSoon(label);
+  };
+
   const handleGenerate = async () => {
     setGenError(null);
+    if (tab !== 't2i') {
+      setGenError('Only Text→Image is wired right now. This workflow is coming soon.');
+      return;
+    }
     const baseUrl = settings?.backendUrl;
     // Settings drawer's "Checkpoint filename" field is the authoritative
     // override — picking via ModelPicker writes through to it via
@@ -94,9 +117,21 @@ export function VariantPersonalClassic({
     }
 
     const claimedSeed = consumePendingSeed && consumePendingSeed();
-    const seed = (typeof claimedSeed === 'number' && Number.isFinite(claimedSeed))
-      ? claimedSeed
-      : randomSeed();
+    let seed;
+    if (typeof claimedSeed === 'number' && Number.isFinite(claimedSeed)) {
+      seed = claimedSeed;
+      setSeedMode('Custom');
+      setSeedInput(String(claimedSeed));
+    } else if (seedMode === 'Custom') {
+      const parsedSeed = Number(seedInput.trim());
+      if (!Number.isInteger(parsedSeed) || parsedSeed < 0 || parsedSeed > 0xffffffff) {
+        setGenError('Enter a whole-number custom seed between 0 and 4294967295, or switch Seed to Random.');
+        return;
+      }
+      seed = parsedSeed;
+    } else {
+      seed = randomSeed();
+    }
     const workflow = buildTextToImageWorkflow({
       checkpointFilename: checkpoint,
       prompt,
@@ -155,16 +190,16 @@ export function VariantPersonalClassic({
               <button className={`mod-tab ${modality === 'image' ? 'active' : ''}`} onClick={() => setModality('image')}>
                 <Ic.Image size={18}/>
               </button>
-              <button className={`mod-tab ${modality === 'video' ? 'active' : ''}`} onClick={() => setModality('video')}>
-                <Ic.Video size={18}/>
+              <button className="mod-tab soon" onClick={() => markSoon('Video generation')} aria-label="Video generation coming soon">
+                <Ic.Video size={18}/><SoonBadge/>
               </button>
-              <button className={`mod-tab ${modality === 'music' ? 'active' : ''}`} onClick={() => setModality('music')}>
-                <Ic.Music size={18}/>
+              <button className="mod-tab soon" onClick={() => markSoon('Music generation')} aria-label="Music generation coming soon">
+                <Ic.Music size={18}/><SoonBadge/>
               </button>
             </div>
             <div className="mode-pill">
               <span style={{flex:1, fontWeight: 500}}>Local pipeline</span>
-              <span className="mono mute" style={{fontSize: 10}}>ComfyUI · CUDA</span>
+              <span className="mono mute" style={{fontSize: 10}}>ComfyUI · local</span>
             </div>
           </div>
         </div>
@@ -178,12 +213,18 @@ export function VariantPersonalClassic({
 
         <div className="cf-section" style={{paddingTop: 12}}>
           <div className="cf-tabs cf-tabs-scroll">
-            <div className={`cf-tab ${tab === 't2i' ? 'active' : ''}`} onClick={() => setTab('t2i')}>Text → Image</div>
-            <div className={`cf-tab ${tab === 'i2i' ? 'active' : ''}`} onClick={() => setTab('i2i')}>Image → Image</div>
-            <div className={`cf-tab ${tab === 'inpaint' ? 'active' : ''}`} onClick={() => setTab('inpaint')}>Inpaint</div>
-            <div className={`cf-tab ${tab === 'upscale' ? 'active' : ''}`} onClick={() => setTab('upscale')}>Upscale</div>
+            <div className={`cf-tab ${tab === 't2i' ? 'active' : ''}`} onClick={() => { setTab('t2i'); setSoonNote(null); }}>Text → Image</div>
+            <div className={`cf-tab ${tab === 'i2i' ? 'active' : ''} soon`} onClick={() => selectFutureTab('i2i', 'Image→Image')}>Image → Image <SoonBadge/></div>
+            <div className={`cf-tab ${tab === 'inpaint' ? 'active' : ''} soon`} onClick={() => selectFutureTab('inpaint', 'Inpaint')}>Inpaint <SoonBadge/></div>
+            <div className={`cf-tab ${tab === 'upscale' ? 'active' : ''} soon`} onClick={() => selectFutureTab('upscale', 'Upscale')}>Upscale <SoonBadge/></div>
           </div>
         </div>
+
+        {soonNote && (
+          <div className="cf-section" style={{paddingTop: 0, paddingBottom: 0}}>
+            <div className="cf-soon-note">{soonNote}</div>
+          </div>
+        )}
 
         {tab !== 't2i' && (
           <div className="cf-section">
@@ -205,7 +246,7 @@ export function VariantPersonalClassic({
                   <Ic.Image size={22} color="var(--text-dim)"/>
                 </div>
                 <div style={{flex: 1}}>
-                  <div style={{fontSize: 13, fontWeight: 500}}>Tap to choose</div>
+                  <div style={{fontSize: 13, fontWeight: 500}}>Source picker coming soon</div>
                   <div className="dim" style={{fontSize: 11, marginTop: 2}}>From recent runs · gallery · file</div>
                 </div>
               </div>
@@ -232,12 +273,12 @@ export function VariantPersonalClassic({
               {tab === 'upscale' && (
                 <div style={{marginTop: 12, display:'flex', gap: 6}}>
                   {['2×', '3×', '4×'].map((s, i) => (
-                    <button key={s} className="cf-out-chip" style={{
+                    <button key={s} className="cf-out-chip soon" style={{
                       flex: 1, justifyContent: 'center',
                       background: i === 0 ? 'var(--cyan-soft)' : undefined,
                       color: i === 0 ? 'var(--cyan)' : undefined,
                       borderColor: i === 0 ? 'var(--cyan)' : undefined,
-                    }}>{s}</button>
+                    }}>{s} <SoonBadge/></button>
                   ))}
                 </div>
               )}
@@ -277,7 +318,7 @@ export function VariantPersonalClassic({
               </button>
             </div>
             {loras.length === 0 ? (
-              <div className="cf-add-empty">None loaded · 312 available locally</div>
+              <div className="cf-add-empty">None loaded · Add local LoRAs from your ComfyUI</div>
             ) : (
               <>
                 <div className="cf-lora-section-label">LoRA</div>
@@ -348,8 +389,7 @@ export function VariantPersonalClassic({
         <div className="cf-section">
           <SectionTitle>Output Settings</SectionTitle>
           <div className="cf-out-row">
-            <button className="cf-out-chip"><Ic.Image size={14}/> PNG</button>
-            <button className="cf-out-chip"><Ic.Brush size={14}/> High</button>
+            <button className="cf-out-chip soon"><Ic.Image size={14}/> PNG <SoonBadge/></button>
           </div>
         </div>
 
@@ -357,30 +397,19 @@ export function VariantPersonalClassic({
           <CollapsibleCard title="Advanced">
             <ParamRow
               label="CFG Scale"
-              presets={['Creative','Balanced','Precise']}
-              presetValue={cfgPreset}
-              onPreset={(p) => setCfg(CFG_PRESETS[p])}
-              slider={<SliderRow value={cfg} min={1} max={20} onChange={setCfg}/>}
+              slider={<SliderRow value={cfg} min={1} max={20} step={0.5} onChange={setCfg}/>}
             />
             <div>
               <div className="row between" style={{marginBottom: 10}}>
                 <div className="label">Sampler <Ic.Info size={13}/></div>
-                <Chips
-                  options={['Fast','Popular']}
-                  value={samplerPreset}
-                  onChange={(p) => setSampler(SAMPLER_PRESETS[p])}
-                />
               </div>
-              <div className="cf-input row between" style={{cursor:'pointer'}}>
+              <button className="cf-input row between" style={{cursor:'pointer', textAlign:'left'}} onClick={() => setSamplerOpen(true)}>
                 <span>{sampler}</span>
                 <Ic.ChevDown size={14} color="var(--text-dim)"/>
-              </div>
+              </button>
             </div>
             <ParamRow
               label="Steps"
-              presets={['Fast','Balanced','High']}
-              presetValue={stepsPreset}
-              onPreset={(p) => setSteps(STEPS_PRESETS[p])}
               slider={<SliderRow value={steps} min={10} max={60} onChange={setSteps}/>}
             />
             <div>
@@ -394,30 +423,35 @@ export function VariantPersonalClassic({
                   className="cf-input mono"
                   style={{flex:1}}
                   placeholder={seedMode === 'Random' ? 'auto' : 'enter seed…'}
+                  value={seedInput}
+                  onChange={e => setSeedInput(e.target.value.replace(/[^0-9]/g, ''))}
                   disabled={seedMode === 'Random'}
                 />
               </div>
             </div>
-            <ParamRow
-              label="CLIP Skip"
-              slider={<SliderRow value={clip} min={1} max={4} onChange={setClip}/>}
-            />
+            <div>
+              <div className="label" style={{marginBottom: 10}}>CLIP Skip <SoonBadge/></div>
+              <div className="cf-input row between" style={{opacity: .65}}>
+                <span>Not wired yet</span>
+                <span className="mono mute">{clip}</span>
+              </div>
+            </div>
             <div>
               <div className="label" style={{marginBottom: 10}}>VAE <Ic.Info size={13}/></div>
-              <button className="cf-action-btn"><Ic.Plus size={14}/> Select VAE</button>
+              <button className="cf-action-btn soon"><Ic.Plus size={14}/> Select VAE <SoonBadge/></button>
             </div>
           </CollapsibleCard>
         </div>
       </div>
       <Dock
-        label="Generate"
+        label={tab === 't2i' ? 'Generate' : 'Coming soon'}
         personal
-        etaSec={18}
-        gpu="Cloud GPU"
+        gpu={settings?.backendProfile ? `Local ComfyUI · ${settings.backendProfile}` : 'Local ComfyUI'}
+        status={tab === 't2i' ? 'ready' : 'soon'}
         qty={qty}
         onQty={setQty}
         onGpuClick={() => setBackendOpen(true)}
-        onGenerate={handleGenerate}
+        onGenerate={tab === 't2i' ? handleGenerate : undefined}
         generating={generating}
       />
 
@@ -440,7 +474,21 @@ export function VariantPersonalClassic({
         onSelect={onAddLora}
         baseUrl={settings?.backendUrl}
       />
-      <BackendSwitcher open={backendOpen} onClose={() => setBackendOpen(false)}/>
+      <BottomSheet open={samplerOpen} onClose={() => setSamplerOpen(false)} title="Sampler">
+        <SheetSection>
+          {SAMPLER_OPTIONS.map(option => (
+            <button
+              key={option}
+              className="cf-sheet-item"
+              onClick={() => { setSampler(option); setSamplerOpen(false); }}
+            >
+              <span style={{flex: 1}}>{option}</span>
+              {sampler === option && <Ic.Check size={16} color="var(--accent)"/>}
+            </button>
+          ))}
+        </SheetSection>
+      </BottomSheet>
+      <BackendSwitcher open={backendOpen} onClose={() => setBackendOpen(false)} settings={settings} onSettingsChange={onSettingsChange}/>
     </div>
   );
 }

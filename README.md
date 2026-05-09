@@ -58,14 +58,12 @@ Then in the app:
 3. Type your ComfyUI URL (e.g. `http://192.168.1.42:8188`) and tap
    **Test Connection**. A successful response means CORS is set up
    correctly and ComfyUI is reachable.
-4. Open the side drawer → **Settings** and fill in:
-   - **Checkpoint filename** — the exact `.safetensors` filename from your
-     ComfyUI `models/checkpoints/` folder. (A real picker pulled from
-     ComfyUI's `/object_info` endpoint is on the roadmap; for now you
-     type it.)
+4. Pick a checkpoint from the Model card's **Change** picker, or open
+   the side drawer → **Settings** and type an exact checkpoint filename as
+   a manual override.
 5. On Screen A (Generate), type a prompt and tap **Generate**. The app
-   submits a Text → Image workflow, polls `/history` for the result, and
-   shows the image at the top of the screen.
+   submits a Text → Image workflow, polls `/history`, and shows outputs
+   in Queue / Feed.
 
 If anything fails, the error banner shows the actual error message from
 ComfyUI plus a CORS hint when network errors hit. The most common

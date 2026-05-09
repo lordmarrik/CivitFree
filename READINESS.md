@@ -157,24 +157,18 @@ button / 🟢 hardcoded display only.
       persists across reloads.
 - [x] 🔴 Negative Prompt input ✅ now controlled, with a real placeholder
       ("e.g. blurry, low quality, deformed") and persists across reloads.
-- [ ] 🟡 Output Settings: "PNG" and "High" chips have no handlers.
-- [ ] 🟡 Advanced → Sampler "Euler a" dropdown: still doesn't open as a
-      list, but the displayed text now reflects the Sampler preset chip
-      (Fast / Popular). Real searchable dropdown is a follow-up.
-- [x] 🔴 Advanced → CFG / Steps / Sampler preset chips ✅ now drive the
-      slider next to them. Picking _Creative / Balanced / Precise_
-      sets CFG to 3 / 7 / 12; _Fast / Balanced / High_ sets Steps to
-      20 / 30 / 50; _Fast / Popular_ sets Sampler to Euler a / DPM++ 2M
-      Karras. Moving the slider off-preset deselects the chip.
-- [ ] 🟡 Advanced → Seed: hardcoded `687051578` removed. When Random is
-      selected, the input is disabled with an "auto" placeholder.
-      Custom-seed entry is still uncontrolled (no real seed sent yet
-      — wired with ComfyUI integration).
+- [ ] 🟡 Output Settings: `High` was removed because it represented Civitai shared-queue priority. `PNG` remains visible as a coming-soon/fixed-format chip until alternate output formats are real.
+- [x] 🟡 Advanced → Sampler picker: ✅ Fast/Popular shortcut chips removed; the sampler row now opens a real picker backed by local sampler options.
+- [x] 🔴 Advanced → CFG / Steps / Sampler preset chips removed. CFG and Steps are direct controls; Sampler uses one explicit picker instead of Civitai-style shortcut chips.
+- [x] 🟡 Advanced → Seed: ✅ Random submits a generated seed; Custom
+      validates and submits the typed seed; remix-with-seed populates the
+      seed input.
 - [ ] 🟡 Advanced → "Select VAE" button — no handler.
 - [x] 🔴 **Generate button** (dock) — ✅ wired. Builds a Text→Image
       ComfyUI workflow from the form state, submits to `/prompt`, polls
-      `/history` for completion, and shows the result inline. Loading
-      spinner while running; visible error banner on failure.
+      `/history` for completion, and Queue/Feed render the outputs from
+      history. Loading spinner while running; visible error banner on
+      failure.
       Requires `Settings → Checkpoint filename` to be set first.
 
 ### Screen B — Queue
@@ -229,7 +223,7 @@ button / 🟢 hardcoded display only.
 - [x] 🔴 **Settings: every field is `readOnly`.** ✅ All fields now
       editable and persisted: Backend Profile (toggle), ComfyUI URL
       (text), Default Model / Sampler / Scheduler / Size (selects),
-      Steps + CFG (number inputs), Cloud GPU & CivitAI keys (password
+      Steps + CFG (number inputs), Cloud GPU & CivitAI keys (marked soon password
       inputs), PC + Phone save paths (text). Persists across reloads.
 - [ ] 🟡 Model Library: "Browse CivitAI" tab search input is a stub.
 - [ ] 🟡 LoRA Manager: "Browse CivitAI" tab search input is a stub.
@@ -275,9 +269,9 @@ button / 🟢 hardcoded display only.
 
 ### Backend switcher (sheet from the dock GPU pill)
 
-- [ ] 🔴 Choosing Local GPU / Cloud GPU updates the sheet's local state,
-      but nothing else in the app reflects the choice. Generation
-      screen's dock still hardcodes `gpu="Cloud GPU"`.
+- [x] 🔴 Backend sheet/copy: ✅ dock now labels local ComfyUI, Cloud GPU
+      is marked soon, and local backend URL/profile remains the active
+      generation target.
 
 ### Sort / Filter sheets
 
