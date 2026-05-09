@@ -200,8 +200,7 @@ function DrawerSettings({ onBack, settings, onSettingsChange }) {
             autoCorrect="off"
           />
           <div className="mute" style={{fontSize: 10, marginTop: 4, lineHeight: 1.4}}>
-            Exact filename from your ComfyUI <code>models/checkpoints/</code> folder.
-            Real listing from the server lands later — for now, type it.
+            Exact filename from your ComfyUI <code>models/checkpoints/</code> folder. The Model picker can list local checkpoints when the backend is reachable; this field remains a manual override.
           </div>
         </div>
 
@@ -260,7 +259,7 @@ function DrawerSettings({ onBack, settings, onSettingsChange }) {
         </div>
 
         <div>
-          <div style={labelStyle}>Cloud GPU Credentials</div>
+          <div style={labelStyle}>Cloud GPU Credentials <span className="cf-soon-badge">soon</span></div>
           <input
             style={fieldStyle}
             type="password"
@@ -272,7 +271,7 @@ function DrawerSettings({ onBack, settings, onSettingsChange }) {
         </div>
 
         <div>
-          <div style={labelStyle}>CivitAI API Key</div>
+          <div style={labelStyle}>CivitAI API Key <span className="cf-soon-badge">soon</span></div>
           <input
             style={fieldStyle}
             type="password"
@@ -282,12 +281,12 @@ function DrawerSettings({ onBack, settings, onSettingsChange }) {
             autoComplete="off"
           />
           <div className="mute" style={{fontSize: 10, marginTop: 4, lineHeight: 1.4}}>
-            Required for Browse CivitAI, downloading gated models, and accessing your liked/saved resources
+            Stored for future Browse CivitAI/download support; not required for current local Text→Image generation.
           </div>
         </div>
 
         <div>
-          <div style={labelStyle}>PC Image Save Path</div>
+          <div style={labelStyle}>PC Image Save Path <span className="cf-soon-badge">soon</span></div>
           <input
             style={fieldStyle}
             value={s.pcSavePath ?? ''}
@@ -299,7 +298,7 @@ function DrawerSettings({ onBack, settings, onSettingsChange }) {
         </div>
 
         <div>
-          <div style={labelStyle}>Phone Download Path</div>
+          <div style={labelStyle}>Phone Download Path <span className="cf-soon-badge">soon</span></div>
           <input
             style={fieldStyle}
             value={s.phoneSavePath ?? ''}
