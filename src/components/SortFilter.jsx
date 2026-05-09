@@ -2,15 +2,14 @@ import React from 'react';
 import { Ic } from '../shared/icons.jsx';
 import { BottomSheet, SheetSection } from './BottomSheet.jsx';
 
-export function SortSheet({ open, onClose }) {
-  const [selected, setSelected] = React.useState('newest');
+export function SortSheet({ open, onClose, value = 'newest', onChange }) {
   return (
     <BottomSheet open={open} onClose={onClose} title="Sort by">
       <SheetSection>
         {[{id:'newest', label:'Newest first'}, {id:'oldest', label:'Oldest first'}].map(opt => (
-          <button key={opt.id} className="cf-sheet-item" onClick={() => { setSelected(opt.id); onClose(); }}>
+          <button key={opt.id} className="cf-sheet-item" onClick={() => { onChange && onChange(opt.id); onClose && onClose(); }}>
             <span style={{flex:1}}>{opt.label}</span>
-            {selected === opt.id && <Ic.Check size={16} color="var(--accent)"/>}
+            {value === opt.id && <Ic.Check size={16} color="var(--accent)"/>}
           </button>
         ))}
       </SheetSection>
@@ -18,11 +17,9 @@ export function SortSheet({ open, onClose }) {
   );
 }
 
-export function FilterSheet({ open, onClose }) {
-  const [fav, setFav] = React.useState(false);
-  const [genType, setGenType] = React.useState('All');
-  const [hideFailed, setHideFailed] = React.useState(false);
-  const genTypes = ['All','Text→Image','Image→Image','Inpaint','Upscale'];
+export function FilterSheet({ open, onClose, filters, onChange }) {
+  const current = filters || { favoritesOnly: false, hideFailed: false };
+  const patch = (next) => onChange && onChange({ ...current, ...next });
 
   const toggleStyle = (on) => ({
     width: 36, height: 20, borderRadius: 999, position:'relative', cursor:'pointer',
@@ -42,22 +39,22 @@ export function FilterSheet({ open, onClose }) {
       <SheetSection>
         <div style={{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
           <span style={{fontSize:14}}>Favorited only</span>
-          <div style={toggleStyle(fav)} onClick={() => setFav(!fav)}>
-            <div style={dotStyle(fav)}/>
+          <div style={toggleStyle(current.favoritesOnly)} onClick={() => patch({ favoritesOnly: !current.favoritesOnly })}>
+            <div style={dotStyle(current.favoritesOnly)}/>
           </div>
         </div>
         <div style={{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
           <span style={{fontSize:14}}>Hide failed</span>
-          <div style={toggleStyle(hideFailed)} onClick={() => setHideFailed(!hideFailed)}>
-            <div style={dotStyle(hideFailed)}/>
+          <div style={toggleStyle(current.hideFailed)} onClick={() => patch({ hideFailed: !current.hideFailed })}>
+            <div style={dotStyle(current.hideFailed)}/>
           </div>
         </div>
       </SheetSection>
       <SheetSection label="Generation Type">
         <div style={{padding:'8px 16px 12px', display:'flex', gap: 6, flexWrap:'wrap'}}>
-          {genTypes.map(t => (
-            <button key={t} onClick={() => setGenType(t)} className={`cf-chip ${genType===t?'active':''}`} style={{fontSize:12}}>
-              {t}
+          {['All','Text→Image','Image→Image','Inpaint','Upscale'].map((t, i) => (
+            <button key={t} className={`cf-chip ${i === 0 ? 'active' : 'soon'}`} style={{fontSize:12}}>
+              {t}{i > 0 && <span className="cf-soon-badge">soon</span>}
             </button>
           ))}
         </div>
@@ -67,18 +64,18 @@ export function FilterSheet({ open, onClose }) {
           <div style={{
             display:'flex', alignItems:'center', justifyContent:'space-between',
             background:'var(--panel-2)', border:'1px solid var(--line)', borderRadius: 8,
-            padding:'10px 12px', fontSize: 13, cursor:'pointer',
+            padding:'10px 12px', fontSize: 13,
           }}>
             <span style={{color:'var(--text-dim)'}}>All models</span>
-            <Ic.ChevDown size={12} color="var(--text-mute)"/>
+            <span className="cf-sheet-soon">soon</span>
           </div>
         </div>
       </SheetSection>
       <SheetSection label="Date Range">
         <div style={{padding:'8px 16px 12px', display:'flex', gap: 6}}>
-          {['All time','Today','This week','This month'].map(d => (
-            <button key={d} className={`cf-chip ${d==='All time'?'active':''}`} style={{fontSize:11, padding:'5px 8px'}}>
-              {d}
+          {['All time','Today','This week','This month'].map((d, i) => (
+            <button key={d} className={`cf-chip ${i === 0 ? 'active' : 'soon'}`} style={{fontSize:11, padding:'5px 8px'}}>
+              {d}{i > 0 && <span className="cf-soon-badge">soon</span>}
             </button>
           ))}
         </div>
@@ -93,27 +90,31 @@ export function FilterSheet({ open, onClose }) {
   );
 }
 
-export function BackendSwitcher({ open, onClose }) {
-  const [backend, setBackend] = React.useState('cloud');
+export function BackendSwitcher({ open, onClose, settings, onSettingsChange }) {
+  const backend = settings?.backendProfile || 'local';
+  const isLocalActive = backend !== 'cloud';
+  const setBackend = (id) => {
+    if (id === 'local') onSettingsChange && onSettingsChange({ backendProfile: backend === 'cloud' ? 'local' : backend });
+  };
   return (
-    <BottomSheet open={open} onClose={onClose} title="GPU Backend">
+    <BottomSheet open={open} onClose={onClose} title="Backend">
       <SheetSection>
         {[
-          { id:'local', icon: <Ic.Cpu size={18}/>, label:'Local GPU', sub:'RTX 3080 · 10 GB', status:'connected', statusColor:'var(--good)' },
-          { id:'cloud', icon: <Ic.Cloud size={18}/>, label:'Cloud GPU', sub:'A100 · 80 GB', status:'ready', statusColor:'var(--good)' },
+          { id:'local', icon: <Ic.Cpu size={18}/>, label:'Local ComfyUI', sub: settings?.backendUrl || 'Set backend URL in Settings', status:'active', statusColor:'var(--good)' },
+          { id:'cloud', icon: <Ic.Cloud size={18}/>, label:'Cloud GPU', sub:'Remote execution is not wired yet', status:'soon', statusColor:'var(--warn)', soon: true },
         ].map(opt => (
-          <button key={opt.id} className="cf-sheet-item" onClick={() => setBackend(opt.id)} style={{
-            background: backend === opt.id ? 'var(--panel-2)' : 'transparent',
-            borderLeft: backend === opt.id ? '3px solid var(--accent)' : '3px solid transparent',
+          <button key={opt.id} className={`cf-sheet-item ${opt.soon ? 'soon' : ''}`} onClick={() => setBackend(opt.id)} style={{
+            background: (opt.id === 'local' ? isLocalActive : backend === opt.id) ? 'var(--panel-2)' : 'transparent',
+            borderLeft: (opt.id === 'local' ? isLocalActive : backend === opt.id) ? '3px solid var(--accent)' : '3px solid transparent',
           }}>
-            <span style={{color: backend === opt.id ? 'var(--text)' : 'var(--text-dim)'}}>{opt.icon}</span>
+            <span style={{color: (opt.id === 'local' ? isLocalActive : backend === opt.id) ? 'var(--text)' : 'var(--text-dim)'}}>{opt.icon}</span>
             <div style={{flex:1}}>
               <div style={{fontWeight: 600}}>{opt.label}</div>
               <div className="mono mute" style={{fontSize:11, marginTop:2}}>{opt.sub}</div>
             </div>
             <div style={{textAlign:'right'}}>
               <span className="mono" style={{fontSize:10, color: opt.statusColor}}>{opt.status}</span>
-              {backend === opt.id && <div style={{marginTop:4}}><Ic.Check size={14} color="var(--accent)"/></div>}
+              {opt.soon ? <div className="cf-sheet-soon" style={{marginTop:4}}>soon</div> : isLocalActive && <div style={{marginTop:4}}><Ic.Check size={14} color="var(--accent)"/></div>}
             </div>
           </button>
         ))}

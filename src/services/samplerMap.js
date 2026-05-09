@@ -9,6 +9,18 @@
  */
 
 // Display name -> { sampler_name, scheduler_override? }
+export const SAMPLER_OPTIONS = [
+  'Euler a',
+  'Euler',
+  'Heun',
+  'LCM',
+  'DPM++ 2M',
+  'DPM++ 2M Karras',
+  'DPM++ SDE',
+  'DDIM',
+  'UniPC',
+];
+
 const SAMPLER_LOOKUP = {
   'Euler a':         { sampler_name: 'euler_ancestral' },
   'Euler':           { sampler_name: 'euler' },
@@ -20,6 +32,16 @@ const SAMPLER_LOOKUP = {
   'DDIM':            { sampler_name: 'ddim' },
   'UniPC':           { sampler_name: 'uni_pc' },
 };
+
+export const SCHEDULER_OPTIONS = [
+  'Normal',
+  'Karras',
+  'Exponential',
+  'SGM Uniform',
+  'Simple',
+  'DDIM Uniform',
+  'Beta',
+];
 
 const SCHEDULER_LOOKUP = {
   'Normal':       'normal',

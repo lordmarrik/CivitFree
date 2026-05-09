@@ -34,6 +34,10 @@ export function VariantPersonalInpaint({ onTab, source, settings, onSettingsChan
           </div>
         </div>
 
+        <div className="cf-section" style={{paddingTop: 0, paddingBottom: 0}}>
+          <div className="cf-soon-note">Editor roadmap visible: source-image generation and mask export are coming soon.</div>
+        </div>
+
         {activeTab === 'inpaint' && (
           <>
             <div className="cf-paint">
@@ -282,10 +286,10 @@ export function VariantPersonalInpaint({ onTab, source, settings, onSettingsChan
       </div>
 
       <Dock
-        label={activeTab === 'inpaint' ? 'Inpaint' : activeTab === 'outpaint' ? 'Outpaint' : 'Generate Variations'}
+        label="Coming soon"
         qty={activeTab === 'variations' ? varQty : 4}
         onQty={activeTab === 'variations' ? setVarQty : undefined}
-        personal etaSec={12} gpu="Cloud GPU"
+        personal gpu="Local ComfyUI" status="soon"
         onGpuClick={() => setBackendOpen(true)}
       />
 
@@ -295,7 +299,7 @@ export function VariantPersonalInpaint({ onTab, source, settings, onSettingsChan
         settings={settings}
         onSettingsChange={onSettingsChange}
       />
-      <BackendSwitcher open={backendOpen} onClose={() => setBackendOpen(false)}/>
+      <BackendSwitcher open={backendOpen} onClose={() => setBackendOpen(false)} settings={settings} onSettingsChange={onSettingsChange}/>
     </div>
   );
 }

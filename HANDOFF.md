@@ -60,20 +60,23 @@ If any of these break, suspects in order:
 ## Design ambiguities — things in the UI with no defined purpose
 
 These are present in the React app but **not specified in the locked
-spec**. They need a human decision before they should be wired or
-removed. The user (non-programmer) has not made these calls yet.
+spec**. The current human decision is: keep roadmap controls visible as
+`soon`, but remove Civitai queue-priority/preset shortcuts that do not
+fit local ComfyUI.
 
 1. **Modality bar at top of Screen A — Image / Video / Music tabs.**
-   Image works; Video and Music are selectable and inert. Spec is
-   silent.
-2. **Output Settings: "PNG" and "High" chips.** No spec. Format vs
-   quality? Container vs encoder?
-3. **CLIP Skip slider** in Advanced. Standard SD parameter, not in
-   spec.
-4. **"Select VAE" button** at the bottom of Advanced. Not in spec.
-5. **Seed Random/Custom toggle.** Random disables the input field.
-   Reasonable, unspecified.
-6. **Pipeline bar text** ("Local pipeline · ComfyUI · CUDA"). Spec
+   Image works; Video and Music stay visible with `soon` badges and do
+   not become active modes.
+2. **Output Settings: `PNG` chip.** `High` was removed because it was
+   Civitai shared-queue priority. `PNG` remains as a coming-soon/fixed-
+   format reminder until alternate output formats are real.
+3. **CLIP Skip display** in Advanced. Standard SD parameter, now marked
+   coming soon because the workflow does not wire it yet.
+4. **"Select VAE" button** at the bottom of Advanced. Visible as coming
+   soon until a VAE loader workflow exists.
+5. **Seed Random/Custom toggle.** Random submits a generated seed;
+   Custom validates and submits the typed seed.
+6. **Pipeline bar text** ("Local pipeline · ComfyUI · local"). Spec
    says it's a static status indicator; the actual text content is
    undefined.
 
@@ -86,15 +89,13 @@ the end of the session, rightly.
 
 Tracked in `READINESS.md` per-screen audit. Highlights:
 
-- Cross-page selection counter ("N selected")
-- Batch download as zip
-- Batch favorite
+- Batch download as zip (current batch download triggers individual browser downloads)
 - 256-per-page virtual scrolling pagination
 - LoRA compatibility warning on base-model mismatch
 - Backend profile **list** in Settings (one toggle exists; full
   multi-profile manager doesn't)
 - Filters on Model Library / LoRA Manager are visual only
-- Per-image Download button has no handler
+- Per-image Download now saves the selected ComfyUI `/view` image; favorites, Newest/Oldest sorting, selection counters, Select all, batch favorite, and batch individual downloads are wired locally
 - Run card Info / Trash buttons still inert
 - Inpaint editor's tools (brush/eraser/lasso/wand) don't actually
   paint anything; the canvas mask is decorative
