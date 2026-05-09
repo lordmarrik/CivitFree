@@ -8,17 +8,23 @@ product decisions live in `CLAUDE.md` and are unchanged here.
 
 ## 1. Summary
 
+> Cleanup note: the old non-personal CivitFree demo has been moved to
+> `_archive/legacy-nonpersonal/`. It is archived backup/reference only, not
+> the active app. The active runnable app is CivitFree Personal in `src/`;
+> normal feature work belongs in `src/`.
+
+
 The runnable Vite + React app at `src/` now imports the personal components as
-ES modules — the orphan `.jsx` files in the repo root were ported into
+ES modules — the personal prototype `.jsx` files in the repo root were ported into
 `src/screens/`, `src/components/`, and `src/shared/`, and the HTML prototype's CSS
 was lifted into `src/styles.css`. The HTML prototype (`CivitFree Personal.html`)
-still loads its own copy of the orphan files via Babel-from-CDN as the visual
+still loads its own copy of the prototype files via Babel-from-CDN as the visual
 source of truth, per `CLAUDE.md`.
 
 The two layers no longer compete:
 
 1. **Canonical visual prototype** — `CivitFree Personal.html` plus the repo-root
-   `.jsx` files (Babel-CDN globals). Untouched by this audit.
+   personal `.jsx` files (Babel-CDN globals). Prototype/reference only.
 2. **Runnable Vite + React app** — `src/main.jsx` composes
    `VariantPersonalClassic` / `Queue` / `Feed` / `Inpaint` / `OnboardingFlow` from
    the new `src/screens/` modules.

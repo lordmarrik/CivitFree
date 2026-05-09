@@ -3,3 +3,11 @@ dist/
 .vite/
 *.log
 .DS_Store
+# AI agent/tool junk
+.claude/
+.codex/
+.cursor/
+.aider*
+.continue/
+*.patch.tmp
+*.orig

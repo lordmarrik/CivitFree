@@ -15,6 +15,15 @@ at `CivitFree Personal.html` is the canonical visual reference.
 The runnable code lives in `src/`. The user runs it on Windows
 against ComfyUI Portable (v0.18.2 frontend v1.41.21) on an RTX 3080.
 
+## Repository boundaries
+
+- The active runnable app is CivitFree Personal in `src/`.
+- Normal feature work happens in `src/`.
+- `_archive/legacy-nonpersonal/` contains the old non-personal CivitFree demo. It is archived backup/reference only, not active app code.
+- Do not edit archived files or prototype files unless the user explicitly asks.
+- Do not add features or refactor unrelated code unless the user explicitly asks.
+- Run `npm run build` before claiming done.
+
 ## What works (verified end-to-end on 2026-05-07)
 
 The user successfully generated 2 images today via this flow.

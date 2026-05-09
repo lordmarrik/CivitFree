@@ -4,6 +4,12 @@ Companion to `ANALYSIS.md` (which lists features still to **add**). This file
 lists things that are **wrong, missing, or untested** for the existing app to
 behave like a real mobile app rather than a polished mockup.
 
+
+> Repository boundary note: the active runnable app is CivitFree Personal in
+> `src/`. The old non-personal CivitFree demo is archived in
+> `_archive/legacy-nonpersonal/` and is backup/reference only. Do not treat
+> archived files as active app code.
+
 Severity:
 
 - 🔴 **Broken** — affects basic use; must fix before calling this "real"
