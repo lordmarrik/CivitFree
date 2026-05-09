@@ -7,7 +7,7 @@ CivitFree is personal-only: a local-first mobile UI for a user's own image gener
 ## Canonical prototype
 
 - **Main file**: `CivitFree Personal.html`
-- **Legacy reference only**: `CivitFree.html` and the non-personal `variant-*.jsx` files
+- **Archived legacy backup only**: `_archive/legacy-nonpersonal/` contains the old non-personal CivitFree demo
 - **Locked spec**: `Uploads/civitfree-claude-design-instructions-3.md`
 
 ## What's built
@@ -37,11 +37,17 @@ CivitFree is personal-only: a local-first mobile UI for a user's own image gener
 - No thumbs up/down anywhere.
 - X button is removed.
 
+## Active repository boundaries
+
+- The active runnable app is CivitFree Personal in `src/`.
+- Normal feature work happens in `src/`.
+- `_archive/legacy-nonpersonal/` is archived backup/reference only and must not be edited unless explicitly requested.
+- Prototype files must not be edited unless explicitly requested.
+- Do not add features or refactor unrelated code unless explicitly requested.
+- Run `npm run build` before claiming done.
+
 ## Still to do
 
-- Convert the static prototype into a runnable Vite + React app scaffold.
-- Move/re-export personal components into `src/` with proper imports.
-- Add a typed/stubbed ComfyUI client boundary.
 - Implement real ComfyUI workflow graph mutation after the UI shell is scaffolded.
 - Wire remaining placeholder buttons to app state where no backend is required, including run metadata and fullscreen image viewer.
 - Upgrade the LoRA loaded-state section with thumbnails, strength sliders, and remove buttons.
@@ -69,4 +75,4 @@ CivitFree is personal-only: a local-first mobile UI for a user's own image gener
 - `icons.jsx` — icon set
 - `controls.jsx` — shared form controls
 - `bottom-sheet.jsx` — action menu overlay
-- `design-canvas.jsx`, `tweaks-panel.jsx` — framework components
+- `_archive/legacy-nonpersonal/` — archived old non-personal demo; backup/reference only, not active

@@ -90,11 +90,12 @@ failures and fixes:
 - `src/styles.css` — full stylesheet, responsive at 767 px breakpoint
 - `public/manifest.webmanifest`, `public/icon.svg` — PWA install assets
 
-Legacy reference (do not extend):
+Repository boundaries:
 
-- `CivitFree Personal.html` — canonical mockup, Babel-CDN globals
-- `CivitFree.html` and the non-`personal` `variant-*.jsx` files — original
-  CivitAI-style demo, kept for visual reference per `CLAUDE.md`
+- `src/` — active runnable CivitFree Personal app; normal feature work happens here.
+- `CivitFree Personal.html` — canonical personal mockup, Babel-CDN globals; prototype/reference only.
+- Repo-root personal `.jsx` files — prototype/reference only; do not edit unless explicitly requested.
+- `_archive/legacy-nonpersonal/` — archived backup of the old non-personal CivitFree demo; not active and not a feature-work target.
 
 ## Known follow-ups
 
