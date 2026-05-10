@@ -93,27 +93,31 @@ export function FilterSheet({ open, onClose }) {
   );
 }
 
-export function BackendSwitcher({ open, onClose }) {
-  const [backend, setBackend] = React.useState('cloud');
+export function BackendSwitcher({ open, onClose, settings, onSettingsChange }) {
+  const backend = settings?.backendProfile || 'local';
+  const isLocalActive = backend !== 'cloud';
+  const setBackend = (id) => {
+    if (id === 'local') onSettingsChange && onSettingsChange({ backendProfile: backend === 'cloud' ? 'local' : backend });
+  };
   return (
-    <BottomSheet open={open} onClose={onClose} title="GPU Backend">
+    <BottomSheet open={open} onClose={onClose} title="Backend">
       <SheetSection>
         {[
-          { id:'local', icon: <Ic.Cpu size={18}/>, label:'Local GPU', sub:'RTX 3080 · 10 GB', status:'connected', statusColor:'var(--good)' },
-          { id:'cloud', icon: <Ic.Cloud size={18}/>, label:'Cloud GPU', sub:'A100 · 80 GB', status:'ready', statusColor:'var(--good)' },
+          { id:'local', icon: <Ic.Cpu size={18}/>, label:'Local ComfyUI', sub: settings?.backendUrl || 'Set backend URL in Settings', status:'active', statusColor:'var(--good)' },
+          { id:'cloud', icon: <Ic.Cloud size={18}/>, label:'Cloud GPU', sub:'Remote execution is not wired yet', status:'soon', statusColor:'var(--warn)', soon: true },
         ].map(opt => (
-          <button key={opt.id} className="cf-sheet-item" onClick={() => setBackend(opt.id)} style={{
-            background: backend === opt.id ? 'var(--panel-2)' : 'transparent',
-            borderLeft: backend === opt.id ? '3px solid var(--accent)' : '3px solid transparent',
+          <button key={opt.id} className={`cf-sheet-item ${opt.soon ? 'soon' : ''}`} onClick={() => setBackend(opt.id)} style={{
+            background: (opt.id === 'local' ? isLocalActive : backend === opt.id) ? 'var(--panel-2)' : 'transparent',
+            borderLeft: (opt.id === 'local' ? isLocalActive : backend === opt.id) ? '3px solid var(--accent)' : '3px solid transparent',
           }}>
-            <span style={{color: backend === opt.id ? 'var(--text)' : 'var(--text-dim)'}}>{opt.icon}</span>
+            <span style={{color: (opt.id === 'local' ? isLocalActive : backend === opt.id) ? 'var(--text)' : 'var(--text-dim)'}}>{opt.icon}</span>
             <div style={{flex:1}}>
               <div style={{fontWeight: 600}}>{opt.label}</div>
               <div className="mono mute" style={{fontSize:11, marginTop:2}}>{opt.sub}</div>
             </div>
             <div style={{textAlign:'right'}}>
               <span className="mono" style={{fontSize:10, color: opt.statusColor}}>{opt.status}</span>
-              {backend === opt.id && <div style={{marginTop:4}}><Ic.Check size={14} color="var(--accent)"/></div>}
+              {opt.soon ? <div className="cf-sheet-soon" style={{marginTop:4}}>soon</div> : isLocalActive && <div style={{marginTop:4}}><Ic.Check size={14} color="var(--accent)"/></div>}
             </div>
           </button>
         ))}

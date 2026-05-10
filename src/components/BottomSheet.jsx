@@ -56,7 +56,7 @@ export function ImageActionSheet({ open, onClose, seed, palette, prompt, onInpai
       <SheetSection label="Image">
         <SheetItem icon={<Ic.Sparkle size={16}/>} label="Image Variations" soon onClick={onClose}/>
         <SheetItem icon={<Ic.Image size={16}/>} label="Image to Image" soon onClick={onClose}/>
-        <SheetItem icon={<Ic.Brush2 size={16}/>} label="Inpaint" onClick={fireInpaint}/>
+        <SheetItem icon={<Ic.Brush2 size={16}/>} label="Inpaint" soon onClick={fireInpaint}/>
         <SheetItem icon={<Ic.Wand size={16}/>} label="Face Fix" soon onClick={onClose}/>
         <SheetItem icon={<Ic.ChevUp size={16}/>} label="Upscale" soon onClick={onClose}/>
         <SheetItem icon={<Ic.Eraser size={16}/>} label="Remove Background" soon onClick={onClose}/>

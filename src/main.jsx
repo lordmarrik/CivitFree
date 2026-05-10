@@ -101,9 +101,9 @@ function App() {
         <p className="eyebrow">CivitFree Personal</p>
         <h1>Local-first generation UI</h1>
         <p>
-          Mobile-first prototype for ComfyUI workflows. Hamburger opens the side drawer;
-          Change/Add open model and LoRA pickers; the GPU pill swaps backend; image tile menus
-          remix or send to inpaint. ComfyUI transport is stubbed.
+          Mobile-first prototype for local ComfyUI workflows. Text→Image submits real ComfyUI jobs;
+          Queue and Feed read ComfyUI history. Future image, video, music, cloud, and Civitai
+          browsing controls stay visible as coming-soon roadmap items.
         </p>
       </section>
 
