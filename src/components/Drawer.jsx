@@ -1,5 +1,6 @@
 import React from 'react';
 import { Ic } from '../shared/icons.jsx';
+import { SAMPLER_OPTIONS, SCHEDULER_OPTIONS } from '../services/samplerMap.js';
 
 export function SideDrawer({ open, onClose, settings, onSettingsChange }) {
   const [screen, setScreen] = React.useState(null);
@@ -108,14 +109,12 @@ function DrawerMain({ items, onNav, onClose }) {
         ))}
       </div>
       <div style={{padding:'14px 20px', borderTop:'1px solid var(--line-soft)', fontSize: 11, color:'var(--text-mute)', fontFamily:'var(--font-mono)'}}>
-        GPU: RTX 3080 · 10 GB VRAM
+        Backend: Local ComfyUI
       </div>
     </>
   );
 }
 
-const SAMPLER_OPTIONS = ['Euler a', 'Euler', 'DPM++ 2M', 'DPM++ 2M Karras', 'Heun', 'LCM'];
-const SCHEDULER_OPTIONS = ['Normal', 'Karras', 'Exponential', 'SGM Uniform', 'Simple'];
 const MODEL_OPTIONS = [
   'HomoSimile XL v4.0',
   'Pony Diffusion V6 v6.0',
@@ -151,7 +150,7 @@ function DrawerSettings({ onBack, settings, onSettingsChange }) {
       <DrawerHeader title="Settings" onBack={onBack}/>
       <div style={{flex:1, overflow:'auto', padding: 16, display:'flex', flexDirection:'column', gap: 18}}>
         <div>
-          <div style={labelStyle}>Backend Profile</div>
+          <div style={labelStyle}>Local ComfyUI Profile</div>
           <div style={{display:'flex', gap: 6}}>
             {[{id:'steubenville', label:'Steubenville PC'},{id:'columbus', label:'Columbus PC'}].map(p => (
               <button key={p.id} onClick={() => set({ backendProfile: p.id })} style={{
@@ -166,7 +165,7 @@ function DrawerSettings({ onBack, settings, onSettingsChange }) {
         </div>
 
         <div>
-          <div style={labelStyle}>ComfyUI Backend URL</div>
+          <div style={labelStyle}>Local ComfyUI Backend URL</div>
           <input
             style={fieldStyle}
             value={s.backendUrl ?? ''}
@@ -178,7 +177,7 @@ function DrawerSettings({ onBack, settings, onSettingsChange }) {
         </div>
 
         <div>
-          <div style={labelStyle}>Default Model (display)</div>
+          <div style={labelStyle}>Default Model (display only)</div>
           <select
             style={selectStyle}
             value={s.defaultModelName ?? ''}
@@ -260,34 +259,34 @@ function DrawerSettings({ onBack, settings, onSettingsChange }) {
         </div>
 
         <div>
-          <div style={labelStyle}>Cloud GPU Credentials</div>
+          <div style={labelStyle}>Cloud GPU Credentials (future)</div>
           <input
             style={fieldStyle}
             type="password"
             value={s.cloudGpuKey ?? ''}
             onChange={e => set({ cloudGpuKey: e.target.value })}
-            placeholder="sk-…"
+            placeholder="Coming later"
             autoComplete="off"
           />
         </div>
 
         <div>
-          <div style={labelStyle}>CivitAI API Key</div>
+          <div style={labelStyle}>CivitAI API Key (future)</div>
           <input
             style={fieldStyle}
             type="password"
             value={s.civitaiKey ?? ''}
             onChange={e => set({ civitaiKey: e.target.value })}
-            placeholder="civ-…"
+            placeholder="Coming later"
             autoComplete="off"
           />
           <div className="mute" style={{fontSize: 10, marginTop: 4, lineHeight: 1.4}}>
-            Required for Browse CivitAI, downloading gated models, and accessing your liked/saved resources
+            Future field for Civitai browsing and gated model access. It is not used by generation yet.
           </div>
         </div>
 
         <div>
-          <div style={labelStyle}>PC Image Save Path</div>
+          <div style={labelStyle}>PC Image Save Path (future)</div>
           <input
             style={fieldStyle}
             value={s.pcSavePath ?? ''}
@@ -299,7 +298,7 @@ function DrawerSettings({ onBack, settings, onSettingsChange }) {
         </div>
 
         <div>
-          <div style={labelStyle}>Phone Download Path</div>
+          <div style={labelStyle}>Phone Download Path (future)</div>
           <input
             style={fieldStyle}
             value={s.phoneSavePath ?? ''}
