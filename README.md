@@ -13,8 +13,9 @@ and talks to your own ComfyUI server for generation.
 - **Product intent**: see `INTENT.md` for the Civitai-style
   generator parity rules and local-ComfyUI boundary.
 
-The backlog (features still to add) is in `ANALYSIS.md`. The gap list (things
-that are wrong, missing, or untested) is in `READINESS.md`.
+The master plan is in `ROADMAP.md`. The backlog (features still to add) is in
+`ANALYSIS.md`. The gap list (things that are wrong, missing, or untested) is in
+`READINESS.md`.
 
 ## Run it
 
