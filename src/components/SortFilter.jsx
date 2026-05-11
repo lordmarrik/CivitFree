@@ -2,15 +2,14 @@ import React from 'react';
 import { Ic } from '../shared/icons.jsx';
 import { BottomSheet, SheetSection } from './BottomSheet.jsx';
 
-export function SortSheet({ open, onClose }) {
-  const [selected, setSelected] = React.useState('newest');
+export function SortSheet({ open, onClose, value = 'newest', onChange }) {
   return (
     <BottomSheet open={open} onClose={onClose} title="Sort by">
       <SheetSection>
         {[{id:'newest', label:'Newest first'}, {id:'oldest', label:'Oldest first'}].map(opt => (
-          <button key={opt.id} className="cf-sheet-item" onClick={() => { setSelected(opt.id); onClose(); }}>
+          <button key={opt.id} className="cf-sheet-item" onClick={() => { onChange && onChange(opt.id); onClose && onClose(); }}>
             <span style={{flex:1}}>{opt.label}</span>
-            {selected === opt.id && <Ic.Check size={16} color="var(--accent)"/>}
+            {value === opt.id && <Ic.Check size={16} color="var(--accent)"/>}
           </button>
         ))}
       </SheetSection>
@@ -18,11 +17,9 @@ export function SortSheet({ open, onClose }) {
   );
 }
 
-export function FilterSheet({ open, onClose }) {
-  const [fav, setFav] = React.useState(false);
-  const [genType, setGenType] = React.useState('All');
-  const [hideFailed, setHideFailed] = React.useState(false);
-  const genTypes = ['All','Text→Image','Image→Image','Inpaint','Upscale'];
+export function FilterSheet({ open, onClose, filters, onChange }) {
+  const current = filters || { favoritesOnly: false, hideFailed: false };
+  const patch = (next) => onChange && onChange({ ...current, ...next });
 
   const toggleStyle = (on) => ({
     width: 36, height: 20, borderRadius: 999, position:'relative', cursor:'pointer',
@@ -42,22 +39,22 @@ export function FilterSheet({ open, onClose }) {
       <SheetSection>
         <div style={{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
           <span style={{fontSize:14}}>Favorited only</span>
-          <div style={toggleStyle(fav)} onClick={() => setFav(!fav)}>
-            <div style={dotStyle(fav)}/>
+          <div style={toggleStyle(current.favoritesOnly)} onClick={() => patch({ favoritesOnly: !current.favoritesOnly })}>
+            <div style={dotStyle(current.favoritesOnly)}/>
           </div>
         </div>
         <div style={{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
           <span style={{fontSize:14}}>Hide failed</span>
-          <div style={toggleStyle(hideFailed)} onClick={() => setHideFailed(!hideFailed)}>
-            <div style={dotStyle(hideFailed)}/>
+          <div style={toggleStyle(current.hideFailed)} onClick={() => patch({ hideFailed: !current.hideFailed })}>
+            <div style={dotStyle(current.hideFailed)}/>
           </div>
         </div>
       </SheetSection>
       <SheetSection label="Generation Type">
         <div style={{padding:'8px 16px 12px', display:'flex', gap: 6, flexWrap:'wrap'}}>
-          {genTypes.map(t => (
-            <button key={t} onClick={() => setGenType(t)} className={`cf-chip ${genType===t?'active':''}`} style={{fontSize:12}}>
-              {t}
+          {['All','Text→Image','Image→Image','Inpaint','Upscale'].map((t, i) => (
+            <button key={t} className={`cf-chip ${i === 0 ? 'active' : 'soon'}`} style={{fontSize:12}}>
+              {t}{i > 0 && <span className="cf-soon-badge">soon</span>}
             </button>
           ))}
         </div>
@@ -67,18 +64,18 @@ export function FilterSheet({ open, onClose }) {
           <div style={{
             display:'flex', alignItems:'center', justifyContent:'space-between',
             background:'var(--panel-2)', border:'1px solid var(--line)', borderRadius: 8,
-            padding:'10px 12px', fontSize: 13, cursor:'pointer',
+            padding:'10px 12px', fontSize: 13,
           }}>
             <span style={{color:'var(--text-dim)'}}>All models</span>
-            <Ic.ChevDown size={12} color="var(--text-mute)"/>
+            <span className="cf-sheet-soon">soon</span>
           </div>
         </div>
       </SheetSection>
       <SheetSection label="Date Range">
         <div style={{padding:'8px 16px 12px', display:'flex', gap: 6}}>
-          {['All time','Today','This week','This month'].map(d => (
-            <button key={d} className={`cf-chip ${d==='All time'?'active':''}`} style={{fontSize:11, padding:'5px 8px'}}>
-              {d}
+          {['All time','Today','This week','This month'].map((d, i) => (
+            <button key={d} className={`cf-chip ${i === 0 ? 'active' : 'soon'}`} style={{fontSize:11, padding:'5px 8px'}}>
+              {d}{i > 0 && <span className="cf-soon-badge">soon</span>}
             </button>
           ))}
         </div>
