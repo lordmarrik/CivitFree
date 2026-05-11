@@ -1,6 +1,8 @@
 # Next steps
 
-This is the practical implementation order after the Civitai reference audit and mockup intent map. The goal is not to copy Civitai feature-for-feature; it is to make the current CivitFree UI honest, useful, and backed by real local ComfyUI workflows.
+This is the practical implementation order after the Civitai reference audit, mockup intent map, and product intent clarification. The goal is to recreate the selected Civitai generator experience inside the custom CivitFree Personal interface while keeping generation local through ComfyUI and using Civitai only for catalog/download workflows.
+
+See `INTENT.md` for the product north star and the Civitai parity decision rules.
 
 ## Recently completed
 
@@ -51,10 +53,10 @@ Implement only one source-image workflow at a time. Recommended order:
 
 Avoid these until the core local flow is stable:
 
-- Do not build remote Civitai browsing first.
+- Do not build Civitai browsing/downloads before the local generation loop, download behavior, and storage expectations are stable enough to know where downloaded files go.
 - Do not add Video/Music workflows first.
 - Do not build cloud GPU support before local backend/profile behavior is clear.
-- Do not copy Civitai CFG/steps/sampler/scheduler defaults just because they exist upstream.
+- Do not copy Civitai CFG/steps/sampler/scheduler defaults blindly; translate wanted Civitai-like behavior into local ComfyUI settings.
 - Do not implement Delete before Download and storage ownership are clear.
 
 ## Definition of done for the next useful milestone

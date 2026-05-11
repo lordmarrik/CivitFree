@@ -1,7 +1,8 @@
 # CivitFree Personal
 
-Local-first personal image generation UI for ComfyUI. Single-user mobile-first
-React app that talks to your own ComfyUI server.
+Civitai-style personal generator UI for local ComfyUI. CivitFree Personal keeps
+its own mobile-first interface, recreates selected Civitai generator workflows,
+and talks to your own ComfyUI server for generation.
 
 ## Status
 
@@ -9,6 +10,8 @@ React app that talks to your own ComfyUI server.
 - **Runnable app**: `src/` — Vite + React 18, ported from the mockup.
 - **Backend transport**: real (`src/services/comfyClient.js`), targeted at
   ComfyUI **v0.18.x**.
+- **Product intent**: see `INTENT.md` for the Civitai-style
+  generator parity rules and local-ComfyUI boundary.
 
 The backlog (features still to add) is in `ANALYSIS.md`. The gap list (things
 that are wrong, missing, or untested) is in `READINESS.md`.
