@@ -29,8 +29,9 @@ export function VariantPersonalClassic({
   onModelChange,
   settings,
   onSettingsChange,
-  pendingSeed,
+  pendingRemix,
   consumePendingSeed,
+  consumePendingRemix,
 }) {
   const [modality, setModality] = React.useState('image');
   const [tab, setTab] = React.useState('t2i');
@@ -66,11 +67,20 @@ export function VariantPersonalClassic({
   const [genError, setGenError] = React.useState(null);
 
   React.useEffect(() => {
-    if (typeof pendingSeed === 'number' && Number.isFinite(pendingSeed)) {
+    if (!pendingRemix) return;
+    setTab('t2i');
+    setSoonNote(null);
+    setModality('image');
+    const claimedSeed = consumePendingSeed && consumePendingSeed();
+    if (typeof claimedSeed === 'number' && Number.isFinite(claimedSeed)) {
       setSeedMode('Custom');
-      setSeedInput(String(pendingSeed));
+      setSeedInput(String(claimedSeed));
+    } else {
+      setSeedMode('Random');
+      setSeedInput('');
     }
-  }, [pendingSeed]);
+    if (consumePendingRemix) consumePendingRemix();
+  }, [pendingRemix, consumePendingRemix, consumePendingSeed]);
 
   const markSoon = (label) => {
     setSoonNote(`${label} is coming soon. Text→Image is the only wired workflow right now.`);
@@ -114,14 +124,14 @@ export function VariantPersonalClassic({
       return;
     }
 
-    const claimedSeed = consumePendingSeed && consumePendingSeed();
     let seed;
-    if (typeof claimedSeed === 'number' && Number.isFinite(claimedSeed)) {
-      seed = claimedSeed;
-      setSeedMode('Custom');
-      setSeedInput(String(claimedSeed));
-    } else if (seedMode === 'Custom') {
-      const parsedSeed = Number(seedInput.trim());
+    if (seedMode === 'Custom') {
+      const seedText = seedInput.trim();
+      if (!/^\d+$/.test(seedText)) {
+        setGenError('Enter a whole-number custom seed between 0 and 4294967295, or switch Seed to Random.');
+        return;
+      }
+      const parsedSeed = Number(seedText);
       if (!Number.isInteger(parsedSeed) || parsedSeed < 0 || parsedSeed > 0xffffffff) {
         setGenError('Enter a whole-number custom seed between 0 and 4294967295, or switch Seed to Random.');
         return;
