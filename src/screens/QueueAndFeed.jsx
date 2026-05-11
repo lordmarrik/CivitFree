@@ -22,6 +22,28 @@ function sortRuns(runs, sortOrder) {
   return [...(runs || [])].sort((a, b) => sortOrder === 'oldest' ? runTime(a) - runTime(b) : runTime(b) - runTime(a));
 }
 
+
+function remixPayloadFromRun(run, { withSeed = false } = {}) {
+  const loraNames = Array.isArray(run?.loraNames) ? run.loraNames : [];
+  const payload = {
+    prompt: run?.prompt || '',
+    negPrompt: run?.negPrompt || '',
+    loraNames,
+    resourceNames: loraNames,
+  };
+  if (run?.checkpoint) payload.checkpoint = run.checkpoint;
+  if (run?.sampler) payload.sampler = run.sampler;
+  if (run?.scheduler) payload.scheduler = run.scheduler;
+  if (typeof run?.width === 'number' && run.width > 0) payload.width = run.width;
+  if (typeof run?.height === 'number' && run.height > 0) payload.height = run.height;
+  if (typeof run?.cfg === 'number' && run.cfg > 0) payload.cfg = run.cfg;
+  if (typeof run?.steps === 'number' && run.steps > 0) payload.steps = run.steps;
+  if (withSeed && typeof run?.seed === 'number' && Number.isFinite(run.seed)) {
+    payload.seed = run.seed;
+  }
+  return payload;
+}
+
 function sanitizeFilename(filename) {
   return (filename || 'civitfree-output.png').replace(/[\\/:*?"<>|]+/g, '_');
 }
@@ -113,7 +135,7 @@ function RunCard({ run, baseUrl, onImageAction, onRunRemix, favorites, selectedI
         {run.status === 'queued' && <span className="time" style={{color:'var(--warn)'}}>· queued</span>}
         {run.status === 'error' && <span className="time" style={{color:'var(--bad)'}}>· error</span>}
         <div className="actions">
-          <button onClick={() => onRunRemix && onRunRemix(run)} aria-label="Remix run"><Ic.Refresh size={14}/></button>
+          <button onClick={() => onRunRemix && onRunRemix(remixPayloadFromRun(run))} aria-label="Remix run"><Ic.Refresh size={14}/></button>
           <button className="soon" aria-label="Run info coming soon"><Ic.Info size={14}/></button>
           <button className="danger soon" aria-label="Delete coming soon"><Ic.Trash size={14}/></button>
         </div>
@@ -153,7 +175,7 @@ function RunCard({ run, baseUrl, onImageAction, onRunRemix, favorites, selectedI
                   onToggleSelected={onToggleSelected}
                   onToggleFavorite={onToggleFavorite}
                   onDownload={onDownload}
-                  onAction={(meta) => onImageAction && onImageAction({ ...meta, prompt: run.prompt, seed: run.seed })}
+                  onAction={(meta) => onImageAction && onImageAction({ ...meta, seed: run.seed, remixPayload: remixPayloadFromRun(run) })}
                 />
               );
             })}
@@ -349,7 +371,7 @@ export function VariantPersonalQueue({ onTab, onSendToInpaint, onRemix, settings
                 onToggleFavorite={toggleFavorite}
                 onDownload={handleDownload}
                 onImageAction={setActiveAction}
-                onRunRemix={(r) => onRemix && onRemix({ prompt: r.prompt, seed: r.seed })}
+                onRunRemix={onRemix}
               />
             ))
         }
@@ -360,7 +382,8 @@ export function VariantPersonalQueue({ onTab, onSendToInpaint, onRemix, settings
         onClose={() => setActiveAction(null)}
         seed={activeAction?.seed}
         palette={undefined}
-        prompt={activeAction?.prompt}
+        prompt={activeAction?.remixPayload?.prompt}
+        remixPayload={activeAction?.remixPayload}
         onInpaint={onSendToInpaint}
         onRemix={onRemix}
         onDownload={() => activeAction && handleDownload(activeAction)}
@@ -435,8 +458,8 @@ export function VariantPersonalFeed({ onTab, onSendToInpaint, onRemix, settings,
           filename: img.filename,
           type: img.type,
           subfolder: img.subfolder,
-          prompt: run.prompt,
           seed: run.seed,
+          remixPayload: remixPayloadFromRun(run),
           runTime: runTime(run),
         });
       }
@@ -518,7 +541,7 @@ export function VariantPersonalFeed({ onTab, onSendToInpaint, onRemix, settings,
                   onToggleSelected={toggleSelected}
                   onToggleFavorite={toggleFavorite}
                   onDownload={handleDownload}
-                  onAction={(meta) => setActiveAction({ ...meta, prompt: t.prompt, seed: t.seed })}
+                  onAction={(meta) => setActiveAction({ ...meta, seed: t.seed, remixPayload: t.remixPayload })}
                 />
               ))}
             </div>
@@ -530,7 +553,8 @@ export function VariantPersonalFeed({ onTab, onSendToInpaint, onRemix, settings,
         open={activeAction !== null}
         onClose={() => setActiveAction(null)}
         seed={activeAction?.seed}
-        prompt={activeAction?.prompt}
+        prompt={activeAction?.remixPayload?.prompt}
+        remixPayload={activeAction?.remixPayload}
         onInpaint={onSendToInpaint}
         onRemix={onRemix}
         onDownload={() => activeAction && handleDownload(activeAction)}
