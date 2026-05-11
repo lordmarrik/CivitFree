@@ -1,7 +1,8 @@
 # CivitFree Personal
 
-Local-first personal image generation UI for ComfyUI. Single-user mobile-first
-React app that talks to your own ComfyUI server.
+Civitai-style personal generator UI for local ComfyUI. CivitFree Personal keeps
+its own mobile-first interface, recreates selected Civitai generator workflows,
+and talks to your own ComfyUI server for generation.
 
 ## Status
 
