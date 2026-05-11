@@ -1,4 +1,3 @@
-import React from 'react';
 import { Ic } from '../shared/icons.jsx';
 
 export function BottomSheet({ open, onClose, title, children }) {
@@ -38,17 +37,26 @@ export function SheetItem({ icon, label, danger, soon, onClick }) {
   );
 }
 
-export function ImageActionSheet({ open, onClose, seed, palette, prompt, onInpaint, onRemix }) {
+export function ImageActionSheet({ open, onClose, seed, palette, prompt, remixPayload, onInpaint, onRemix, onDownload }) {
   const fireRemix = (withSeed) => {
-    if (onRemix) onRemix({ prompt, seed: withSeed ? seed : undefined, palette });
+    if (onRemix) {
+      const payload = { ...(remixPayload || {}), prompt: remixPayload?.prompt ?? prompt, palette };
+      if (withSeed && typeof seed === 'number' && Number.isFinite(seed)) payload.seed = seed;
+      else delete payload.seed;
+      onRemix(payload);
+    }
     onClose && onClose();
   };
   const fireInpaint = () => {
     if (onInpaint) onInpaint({ seed, palette });
     onClose && onClose();
   };
+  const fireDownload = () => {
+    if (onDownload) onDownload();
+    onClose && onClose();
+  };
   return (
-    <BottomSheet open={open} onClose={onClose} title={seed ? `#${seed}` : 'Actions'}>
+    <BottomSheet open={open} onClose={onClose} title={typeof seed === 'number' && Number.isFinite(seed) ? `#${seed}` : 'Actions'}>
       <SheetSection label="Remix">
         <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix" onClick={() => fireRemix(false)}/>
         <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix (with seed)" onClick={() => fireRemix(true)}/>
@@ -65,7 +73,7 @@ export function ImageActionSheet({ open, onClose, seed, palette, prompt, onInpai
         <SheetItem icon={<Ic.Video size={16}/>} label="Image to Video" soon onClick={onClose}/>
       </SheetSection>
       <SheetSection>
-        <SheetItem icon={<Ic.Download size={16}/>} label="Download" soon onClick={onClose}/>
+        <SheetItem icon={<Ic.Download size={16}/>} label="Download" onClick={fireDownload}/>
         <SheetItem icon={<Ic.Trash size={16}/>} label="Delete" danger soon onClick={onClose}/>
       </SheetSection>
     </BottomSheet>

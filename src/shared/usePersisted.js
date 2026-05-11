@@ -18,7 +18,9 @@ export function usePersisted(key, initial) {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem(storageKey, JSON.stringify(value));
       }
-    } catch {}
+    } catch {
+      // Persistence is best-effort; ignore unavailable storage or quota errors.
+    }
   }, [storageKey, value]);
   return [value, setValue];
 }

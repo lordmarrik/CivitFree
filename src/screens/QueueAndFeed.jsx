@@ -3,22 +3,86 @@ import { Ic } from '../shared/icons.jsx';
 import { FakeImg } from '../shared/mockImages.jsx';
 import { StatusBar, TopBar } from '../shared/Shell.jsx';
 import { SideDrawer } from '../components/Drawer.jsx';
-import { BottomSheet, SheetSection, SheetItem, ImageActionSheet } from '../components/BottomSheet.jsx';
+import { ImageActionSheet } from '../components/BottomSheet.jsx';
 import { SortSheet, FilterSheet } from '../components/SortFilter.jsx';
 import { useComfyHistory } from '../shared/useComfyHistory.js';
+import { usePersisted } from '../shared/usePersisted.js';
 import { imageUrl as comfyImageUrl } from '../services/comfyClient.js';
 import { paletteForFilename, seedHashForFilename } from '../services/historyParser.js';
+
+function imageKey({ filename, type, subfolder }) {
+  return [type || 'output', subfolder || '', filename || ''].join('/');
+}
+
+function runTime(run) {
+  return run?.completedAt ?? run?.startedAt ?? 0;
+}
+
+function sortRuns(runs, sortOrder) {
+  return [...(runs || [])].sort((a, b) => sortOrder === 'oldest' ? runTime(a) - runTime(b) : runTime(b) - runTime(a));
+}
+
+
+function remixPayloadFromRun(run, { withSeed = false } = {}) {
+  const loras = Array.isArray(run?.loras) ? run.loras : null;
+  const loraNames = Array.isArray(run?.loraNames) ? run.loraNames : [];
+  const payload = {
+    prompt: run?.prompt || '',
+    negPrompt: run?.negPrompt || '',
+    loras: loras ?? loraNames.map(name => ({ name })),
+    loraNames,
+    resourceNames: loraNames,
+  };
+  if (run?.checkpoint) payload.checkpoint = run.checkpoint;
+  if (run?.sampler) payload.sampler = run.sampler;
+  if (run?.scheduler) payload.scheduler = run.scheduler;
+  if (typeof run?.width === 'number' && run.width > 0) payload.width = run.width;
+  if (typeof run?.height === 'number' && run.height > 0) payload.height = run.height;
+  if (typeof run?.cfg === 'number' && run.cfg > 0) payload.cfg = run.cfg;
+  if (typeof run?.steps === 'number' && run.steps > 0) payload.steps = run.steps;
+  if (withSeed && typeof run?.seed === 'number' && Number.isFinite(run.seed)) {
+    payload.seed = run.seed;
+  }
+  return payload;
+}
+
+function sanitizeFilename(filename) {
+  return (filename || 'civitfree-output.png').replace(/[\\/:*?"<>|]+/g, '_');
+}
+
+async function downloadUrl(url, filename) {
+  if (!url) throw new Error('No image URL available for download.');
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Download failed (${response.status}).`);
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = sanitizeFilename(filename);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  }
+}
+
+function FavoriteIcon({ active }) {
+  return <Ic.Heart size={14} color={active ? 'var(--accent)' : undefined}/>;
+}
 
 /**
  * Real-image card. If we have a baseUrl + filename, render a real
  * <img>; otherwise fall back to the deterministic gradient placeholder
  * keyed off the filename so the card still has shape.
  */
-function ResultTile({ baseUrl, filename, type, subfolder, alt, onAction }) {
+function ResultTile({ baseUrl, filename, type, subfolder, alt, onAction, favorite, selected, onToggleSelected, onToggleFavorite, onDownload }) {
   const haveUrl = baseUrl && filename;
   const url = haveUrl ? comfyImageUrl(baseUrl, { filename, type, subfolder }) : '';
+  const meta = { filename, type, subfolder, url };
   return (
-    <div className="cf-feed-card">
+    <div className={`cf-feed-card ${favorite ? 'favorited' : ''} ${selected ? 'selected' : ''}`}>
       <div className="img">
         {haveUrl ? (
           <img
@@ -29,13 +93,19 @@ function ResultTile({ baseUrl, filename, type, subfolder, alt, onAction }) {
         ) : (
           <FakeImg palette={paletteForFilename(filename || alt || 'x')} seed={seedHashForFilename(filename || alt || 'x')}/>
         )}
-        <div className="check"/>
-        <button className="more" onClick={() => onAction && onAction({ filename, url })}><Ic.More size={16}/></button>
+        <button
+          className={selected ? 'check active' : 'check'}
+          onClick={() => onToggleSelected && onToggleSelected(meta)}
+          aria-label={selected ? 'Deselect image' : 'Select image'}
+        >
+          {selected && <Ic.Check size={12}/>}
+        </button>
+        <button className="more" onClick={() => onAction && onAction(meta)}><Ic.More size={16}/></button>
       </div>
       <div className="actions">
-        <button><Ic.Heart size={14}/></button>
-        <button onClick={() => onAction && onAction({ filename, url })}><Ic.Wand size={14}/></button>
-        <button><Ic.Download size={14}/></button>
+        <button onClick={() => onToggleFavorite && onToggleFavorite(meta)} aria-label={favorite ? 'Unfavorite image' : 'Favorite image'}><FavoriteIcon active={favorite}/></button>
+        <button onClick={() => onAction && onAction(meta)} aria-label="Image actions"><Ic.Wand size={14}/></button>
+        <button onClick={() => onDownload && onDownload(meta)} aria-label="Download image"><Ic.Download size={14}/></button>
       </div>
     </div>
   );
@@ -53,7 +123,7 @@ function relativeTime(ms) {
   return `${day}d ago`;
 }
 
-function RunCard({ run, baseUrl, onImageAction, onRunRemix }) {
+function RunCard({ run, baseUrl, onImageAction, onRunRemix, favorites, selectedImages, onToggleSelected, onToggleFavorite, onDownload }) {
   const [expanded, setExpanded] = React.useState(false);
   const time = relativeTime(run.completedAt || run.startedAt);
   const count = run.images.length;
@@ -67,14 +137,14 @@ function RunCard({ run, baseUrl, onImageAction, onRunRemix }) {
         {run.status === 'queued' && <span className="time" style={{color:'var(--warn)'}}>· queued</span>}
         {run.status === 'error' && <span className="time" style={{color:'var(--bad)'}}>· error</span>}
         <div className="actions">
-          <button onClick={() => onRunRemix && onRunRemix(run)} aria-label="Remix run"><Ic.Refresh size={14}/></button>
-          <button><Ic.Info size={14}/></button>
-          <button className="danger"><Ic.Trash size={14}/></button>
+          <button onClick={() => onRunRemix && onRunRemix(remixPayloadFromRun(run))} aria-label="Remix run"><Ic.Refresh size={14}/></button>
+          <button className="soon" aria-label="Run info coming soon"><Ic.Info size={14}/></button>
+          <button className="danger soon" aria-label="Delete coming soon"><Ic.Trash size={14}/></button>
         </div>
       </div>
       <div className="body">
         <div className="cf-tag">CREATE IMAGE</div>
-        <div className={expanded ? "promptline expanded" : "promptline"} onClick={() => setExpanded(!expanded)}>
+        <div className={expanded ? 'promptline expanded' : 'promptline'} onClick={() => setExpanded(!expanded)}>
           {run.prompt || <span className="mute">(no prompt)</span>}{' '}
           {run.prompt && (!expanded
             ? <span className="more">Show more</span>
@@ -92,17 +162,25 @@ function RunCard({ run, baseUrl, onImageAction, onRunRemix }) {
         ))}
         {run.images.length > 0 && (
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap: 6, marginTop: 10}}>
-            {run.images.map((img, i) => (
-              <ResultTile
-                key={img.filename + i}
-                baseUrl={baseUrl}
-                filename={img.filename}
-                type={img.type}
-                subfolder={img.subfolder}
-                alt={`Result ${i + 1}`}
-                onAction={(meta) => onImageAction && onImageAction({ ...meta, prompt: run.prompt, seed: run.seed })}
-              />
-            ))}
+            {run.images.map((img, i) => {
+              const key = imageKey(img);
+              return (
+                <ResultTile
+                  key={img.filename + i}
+                  baseUrl={baseUrl}
+                  filename={img.filename}
+                  type={img.type}
+                  subfolder={img.subfolder}
+                  alt={`Result ${i + 1}`}
+                  favorite={!!favorites[key]}
+                  selected={!!selectedImages?.[key]}
+                  onToggleSelected={onToggleSelected}
+                  onToggleFavorite={onToggleFavorite}
+                  onDownload={onDownload}
+                  onAction={(meta) => onImageAction && onImageAction({ ...meta, seed: run.seed, remixPayload: remixPayloadFromRun(run) })}
+                />
+              );
+            })}
           </div>
         )}
       </div>
@@ -110,28 +188,28 @@ function RunCard({ run, baseUrl, onImageAction, onRunRemix }) {
   );
 }
 
-function SortFilterRow({ onSort, onFilter }) {
+function SortFilterRow({ onSort, onFilter, sortOrder, filters, totalCount = 0, selectedCount = 0, allSelected = false, onSelectAll, onBatchFavorite, onBatchDownload }) {
+  const filterCount = (filters?.favoritesOnly ? 1 : 0) + (filters?.hideFailed ? 1 : 0);
   return (
     <div className="cf-sort-row">
-      <span className="item" onClick={onSort} style={{cursor:'pointer'}}><Ic.SortDesc size={14}/> Newest <Ic.ChevDown size={12}/></span>
-      <span className="item muted" onClick={onFilter} style={{cursor:'pointer'}}><Ic.Filter size={14}/> Filters <Ic.ChevDown size={12}/></span>
-      <span className="right">Select all <span className="checkbox"/></span>
+      <span className="item" onClick={onSort} style={{cursor:'pointer'}}><Ic.SortDesc size={14}/> {sortOrder === 'oldest' ? 'Oldest' : 'Newest'} <Ic.ChevDown size={12}/></span>
+      <span className="item muted" onClick={onFilter} style={{cursor:'pointer'}}><Ic.Filter size={14}/> Filters{filterCount ? ` (${filterCount})` : ''} <Ic.ChevDown size={12}/></span>
+      <button className={`right cf-select-all ${allSelected ? 'active' : ''}`} onClick={onSelectAll} disabled={!totalCount}>
+        <span className="checkbox">{allSelected && <Ic.Check size={12}/>}</span>
+        {allSelected ? 'Clear all' : 'Select all'}
+      </button>
+      {selectedCount > 0 && (
+        <div className="cf-batch-bar">
+          <span>{selectedCount} selected</span>
+          <button onClick={onBatchFavorite}><Ic.Heart size={13}/> Favorite</button>
+          <button onClick={onBatchDownload}><Ic.Download size={13}/> Download</button>
+        </div>
+      )}
     </div>
   );
 }
 
-function RunRemixSheet({ open, onClose }) {
-  return (
-    <BottomSheet open={open} onClose={onClose} title="Remix Run">
-      <SheetSection>
-        <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix" onClick={onClose}/>
-        <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix (with seed)" onClick={onClose}/>
-      </SheetSection>
-    </BottomSheet>
-  );
-}
-
-function HistoryEmpty({ loading, error, onReload, kind }) {
+function HistoryEmpty({ loading, error, onReload, kind, filtered }) {
   if (loading) {
     return (
       <div style={{padding:'40px 18px', textAlign:'center', color:'var(--text-dim)', fontSize: 13, display:'flex', flexDirection:'column', alignItems:'center', gap: 10}}>
@@ -166,9 +244,11 @@ function HistoryEmpty({ loading, error, onReload, kind }) {
   }
   return (
     <div style={{padding:'40px 18px', textAlign:'center', color:'var(--text-mute)', fontSize: 13}}>
-      {kind === 'feed'
-        ? 'No images yet. Generate something on Screen A.'
-        : 'No runs yet. Generate something on Screen A.'}
+      {filtered
+        ? 'No matching items. Try changing filters.'
+        : kind === 'feed'
+          ? 'No images yet. Generate something on Screen A.'
+          : 'No runs yet. Generate something on Screen A.'}
     </div>
   );
 }
@@ -178,25 +258,122 @@ export function VariantPersonalQueue({ onTab, onSendToInpaint, onRemix, settings
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [sortOpen, setSortOpen] = React.useState(false);
   const [filterOpen, setFilterOpen] = React.useState(false);
+  const [sortOrder, setSortOrder] = usePersisted('queueSort', 'newest');
+  const [filters, setFilters] = usePersisted('queueFilters', { favoritesOnly: false, hideFailed: false });
+  const [favorites, setFavorites] = usePersisted('imageFavorites', {});
+  const [selectedImages, setSelectedImages] = usePersisted('selectedImages', {});
+  const [downloadError, setDownloadError] = React.useState(null);
 
   const baseUrl = settings?.backendUrl;
   const { runs, loading, error, reload } = useComfyHistory(baseUrl);
+
+  const toggleFavorite = (img) => {
+    const key = imageKey(img);
+    setFavorites(prev => {
+      const next = { ...(prev || {}) };
+      if (next[key]) delete next[key];
+      else next[key] = { filename: img.filename, type: img.type, subfolder: img.subfolder, savedAt: Date.now() };
+      return next;
+    });
+  };
+
+  const toggleSelected = (img) => {
+    const key = imageKey(img);
+    setSelectedImages(prev => {
+      const next = { ...(prev || {}) };
+      if (next[key]) delete next[key];
+      else next[key] = { filename: img.filename, type: img.type, subfolder: img.subfolder, savedAt: Date.now() };
+      return next;
+    });
+  };
+
+  const handleDownload = async (img) => {
+    setDownloadError(null);
+    try {
+      await downloadUrl(img.url || comfyImageUrl(baseUrl, img), img.filename);
+    } catch (err) {
+      setDownloadError(err?.message || String(err));
+    }
+  };
+
+  const visibleRuns = React.useMemo(() => {
+    let out = sortRuns(runs, sortOrder);
+    if (filters?.hideFailed) out = out.filter(r => r.status !== 'error');
+    if (filters?.favoritesOnly) out = out.filter(r => r.images.some(img => favorites[imageKey(img)]));
+    return out;
+  }, [runs, sortOrder, filters, favorites]);
+
+  const visibleImages = React.useMemo(() => visibleRuns.flatMap(run => run.images), [visibleRuns]);
+  const selectedVisible = visibleImages.filter(img => selectedImages?.[imageKey(img)]);
+  const allSelected = visibleImages.length > 0 && selectedVisible.length === visibleImages.length;
+
+  const toggleSelectAll = () => {
+    setSelectedImages(prev => {
+      const next = { ...(prev || {}) };
+      if (allSelected) {
+        visibleImages.forEach(img => delete next[imageKey(img)]);
+      } else {
+        visibleImages.forEach(img => {
+          next[imageKey(img)] = { filename: img.filename, type: img.type, subfolder: img.subfolder, savedAt: Date.now() };
+        });
+      }
+      return next;
+    });
+  };
+
+  const favoriteSelected = () => {
+    setFavorites(prev => {
+      const next = { ...(prev || {}) };
+      selectedVisible.forEach(img => {
+        next[imageKey(img)] = { filename: img.filename, type: img.type, subfolder: img.subfolder, savedAt: Date.now() };
+      });
+      return next;
+    });
+  };
+
+  const downloadSelected = async () => {
+    setDownloadError(null);
+    try {
+      for (const img of selectedVisible) {
+        await downloadUrl(comfyImageUrl(baseUrl, img), img.filename);
+      }
+    } catch (err) {
+      setDownloadError(err?.message || String(err));
+    }
+  };
 
   return (
     <div className="cf-frame">
       <StatusBar/>
       <TopBar active="clock" personal onMenu={() => setDrawerOpen(true)} onTab={onTab}/>
       <div className="cf-body" style={{padding: 0}}>
-        <SortFilterRow onSort={() => setSortOpen(true)} onFilter={() => setFilterOpen(true)}/>
-        {runs.length === 0
-          ? <HistoryEmpty loading={loading} error={error} onReload={reload} kind="queue"/>
-          : runs.map(run => (
+        <SortFilterRow
+          onSort={() => setSortOpen(true)}
+          onFilter={() => setFilterOpen(true)}
+          sortOrder={sortOrder}
+          filters={filters}
+          totalCount={visibleImages.length}
+          selectedCount={selectedVisible.length}
+          allSelected={allSelected}
+          onSelectAll={toggleSelectAll}
+          onBatchFavorite={favoriteSelected}
+          onBatchDownload={downloadSelected}
+        />
+        {downloadError && <div className="cf-inline-error">Download failed: {downloadError}</div>}
+        {visibleRuns.length === 0
+          ? <HistoryEmpty loading={loading} error={error} onReload={reload} kind="queue" filtered={runs.length > 0}/>
+          : visibleRuns.map(run => (
               <RunCard
                 key={run.promptId}
                 run={run}
                 baseUrl={baseUrl}
+                favorites={favorites || {}}
+                selectedImages={selectedImages || {}}
+                onToggleSelected={toggleSelected}
+                onToggleFavorite={toggleFavorite}
+                onDownload={handleDownload}
                 onImageAction={setActiveAction}
-                onRunRemix={(r) => onRemix && onRemix({ prompt: r.prompt, seed: r.seed })}
+                onRunRemix={onRemix}
               />
             ))
         }
@@ -207,12 +384,14 @@ export function VariantPersonalQueue({ onTab, onSendToInpaint, onRemix, settings
         onClose={() => setActiveAction(null)}
         seed={activeAction?.seed}
         palette={undefined}
-        prompt={activeAction?.prompt}
+        prompt={activeAction?.remixPayload?.prompt}
+        remixPayload={activeAction?.remixPayload}
         onInpaint={onSendToInpaint}
         onRemix={onRemix}
+        onDownload={() => activeAction && handleDownload(activeAction)}
       />
-      <SortSheet open={sortOpen} onClose={() => setSortOpen(false)}/>
-      <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)}/>
+      <SortSheet open={sortOpen} onClose={() => setSortOpen(false)} value={sortOrder} onChange={setSortOrder}/>
+      <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} filters={filters} onChange={setFilters}/>
       <SideDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
@@ -228,37 +407,127 @@ export function VariantPersonalFeed({ onTab, onSendToInpaint, onRemix, settings,
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [sortOpen, setSortOpen] = React.useState(false);
   const [filterOpen, setFilterOpen] = React.useState(false);
+  const [sortOrder, setSortOrder] = usePersisted('feedSort', 'newest');
+  const [filters, setFilters] = usePersisted('feedFilters', { favoritesOnly: false, hideFailed: false });
+  const [favorites, setFavorites] = usePersisted('imageFavorites', {});
+  const [selectedImages, setSelectedImages] = usePersisted('selectedImages', {});
+  const [downloadError, setDownloadError] = React.useState(null);
 
   const baseUrl = settings?.backendUrl;
   const { runs, loading, error, reload } = useComfyHistory(baseUrl);
 
-  // Flatten newest-first: each image becomes a tile, carrying its run's
-  // prompt/seed for the action sheet.
+  const toggleFavorite = (img) => {
+    const key = imageKey(img);
+    setFavorites(prev => {
+      const next = { ...(prev || {}) };
+      if (next[key]) delete next[key];
+      else next[key] = { filename: img.filename, type: img.type, subfolder: img.subfolder, savedAt: Date.now() };
+      return next;
+    });
+  };
+
+  const toggleSelected = (img) => {
+    const key = imageKey(img);
+    setSelectedImages(prev => {
+      const next = { ...(prev || {}) };
+      if (next[key]) delete next[key];
+      else next[key] = { filename: img.filename, type: img.type, subfolder: img.subfolder, savedAt: Date.now() };
+      return next;
+    });
+  };
+
+  const handleDownload = async (img) => {
+    setDownloadError(null);
+    try {
+      await downloadUrl(img.url || comfyImageUrl(baseUrl, img), img.filename);
+    } catch (err) {
+      setDownloadError(err?.message || String(err));
+    }
+  };
+
   const flatTiles = React.useMemo(() => {
+    let sourceRuns = runs || [];
+    if (filters?.hideFailed) sourceRuns = sourceRuns.filter(r => r.status !== 'error');
+    sourceRuns = sortRuns(sourceRuns, sortOrder);
     const out = [];
-    for (const run of runs) {
+    for (const run of sourceRuns) {
       for (const img of run.images) {
+        const key = imageKey(img);
+        if (filters?.favoritesOnly && !favorites[key]) continue;
         out.push({
           key: run.promptId + ':' + img.filename,
+          favoriteKey: key,
           filename: img.filename,
           type: img.type,
           subfolder: img.subfolder,
-          prompt: run.prompt,
           seed: run.seed,
+          remixPayload: remixPayloadFromRun(run),
+          runTime: runTime(run),
         });
       }
     }
     return out;
-  }, [runs]);
+  }, [runs, sortOrder, filters, favorites]);
+
+  const visibleImages = React.useMemo(() => flatTiles.map(({ filename, type, subfolder }) => ({ filename, type, subfolder })), [flatTiles]);
+  const selectedVisible = visibleImages.filter(img => selectedImages?.[imageKey(img)]);
+  const allSelected = visibleImages.length > 0 && selectedVisible.length === visibleImages.length;
+
+  const toggleSelectAll = () => {
+    setSelectedImages(prev => {
+      const next = { ...(prev || {}) };
+      if (allSelected) {
+        visibleImages.forEach(img => delete next[imageKey(img)]);
+      } else {
+        visibleImages.forEach(img => {
+          next[imageKey(img)] = { filename: img.filename, type: img.type, subfolder: img.subfolder, savedAt: Date.now() };
+        });
+      }
+      return next;
+    });
+  };
+
+  const favoriteSelected = () => {
+    setFavorites(prev => {
+      const next = { ...(prev || {}) };
+      selectedVisible.forEach(img => {
+        next[imageKey(img)] = { filename: img.filename, type: img.type, subfolder: img.subfolder, savedAt: Date.now() };
+      });
+      return next;
+    });
+  };
+
+  const downloadSelected = async () => {
+    setDownloadError(null);
+    try {
+      for (const img of selectedVisible) {
+        await downloadUrl(comfyImageUrl(baseUrl, img), img.filename);
+      }
+    } catch (err) {
+      setDownloadError(err?.message || String(err));
+    }
+  };
 
   return (
     <div className="cf-frame">
       <StatusBar/>
       <TopBar active="grid" personal onMenu={() => setDrawerOpen(true)} onTab={onTab}/>
       <div className="cf-body" style={{padding: 0}}>
-        <SortFilterRow onSort={() => setSortOpen(true)} onFilter={() => setFilterOpen(true)}/>
+        <SortFilterRow
+          onSort={() => setSortOpen(true)}
+          onFilter={() => setFilterOpen(true)}
+          sortOrder={sortOrder}
+          filters={filters}
+          totalCount={visibleImages.length}
+          selectedCount={selectedVisible.length}
+          allSelected={allSelected}
+          onSelectAll={toggleSelectAll}
+          onBatchFavorite={favoriteSelected}
+          onBatchDownload={downloadSelected}
+        />
+        {downloadError && <div className="cf-inline-error">Download failed: {downloadError}</div>}
         {flatTiles.length === 0
-          ? <HistoryEmpty loading={loading} error={error} onReload={reload} kind="feed"/>
+          ? <HistoryEmpty loading={loading} error={error} onReload={reload} kind="feed" filtered={runs.length > 0}/>
           : (
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap: 8, padding: 12}}>
               {flatTiles.map(t => (
@@ -269,7 +538,12 @@ export function VariantPersonalFeed({ onTab, onSendToInpaint, onRemix, settings,
                   type={t.type}
                   subfolder={t.subfolder}
                   alt={t.filename}
-                  onAction={(meta) => setActiveAction({ ...meta, prompt: t.prompt, seed: t.seed })}
+                  favorite={!!favorites[t.favoriteKey]}
+                  selected={!!selectedImages?.[t.favoriteKey]}
+                  onToggleSelected={toggleSelected}
+                  onToggleFavorite={toggleFavorite}
+                  onDownload={handleDownload}
+                  onAction={(meta) => setActiveAction({ ...meta, seed: t.seed, remixPayload: t.remixPayload })}
                 />
               ))}
             </div>
@@ -281,12 +555,14 @@ export function VariantPersonalFeed({ onTab, onSendToInpaint, onRemix, settings,
         open={activeAction !== null}
         onClose={() => setActiveAction(null)}
         seed={activeAction?.seed}
-        prompt={activeAction?.prompt}
+        prompt={activeAction?.remixPayload?.prompt}
+        remixPayload={activeAction?.remixPayload}
         onInpaint={onSendToInpaint}
         onRemix={onRemix}
+        onDownload={() => activeAction && handleDownload(activeAction)}
       />
-      <SortSheet open={sortOpen} onClose={() => setSortOpen(false)}/>
-      <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)}/>
+      <SortSheet open={sortOpen} onClose={() => setSortOpen(false)} value={sortOrder} onChange={setSortOrder}/>
+      <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} filters={filters} onChange={setFilters}/>
       <SideDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
