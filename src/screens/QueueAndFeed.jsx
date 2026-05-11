@@ -24,10 +24,12 @@ function sortRuns(runs, sortOrder) {
 
 
 function remixPayloadFromRun(run, { withSeed = false } = {}) {
+  const loras = Array.isArray(run?.loras) ? run.loras : null;
   const loraNames = Array.isArray(run?.loraNames) ? run.loraNames : [];
   const payload = {
     prompt: run?.prompt || '',
     negPrompt: run?.negPrompt || '',
+    loras: loras ?? loraNames.map(name => ({ name })),
     loraNames,
     resourceNames: loraNames,
   };

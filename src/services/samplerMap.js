@@ -21,7 +21,7 @@ export const SAMPLER_OPTIONS = [
   'UniPC',
 ];
 
-const SAMPLER_LOOKUP = {
+export const SAMPLER_LOOKUP = {
   'Euler a':         { sampler_name: 'euler_ancestral' },
   'Euler':           { sampler_name: 'euler' },
   'Heun':            { sampler_name: 'heun' },
@@ -43,7 +43,7 @@ export const SCHEDULER_OPTIONS = [
   'Beta',
 ];
 
-const SCHEDULER_LOOKUP = {
+export const SCHEDULER_LOOKUP = {
   'Normal':       'normal',
   'Karras':       'karras',
   'Exponential':  'exponential',
@@ -60,12 +60,12 @@ const SCHEDULER_LOOKUP = {
  * label.
  */
 export function resolveSampler(samplerDisplay, schedulerDisplay) {
-  const sLookup = SAMPLER_LOOKUP[samplerDisplay] ?? { sampler_name: 'euler' };
-  const scheduler =
-    sLookup.scheduler_override
-    ?? SCHEDULER_LOOKUP[schedulerDisplay]
-    ?? 'normal';
-  return { sampler_name: sLookup.sampler_name, scheduler };
+  const samplerText = typeof samplerDisplay === 'string' ? samplerDisplay.trim() : '';
+  const schedulerText = typeof schedulerDisplay === 'string' ? schedulerDisplay.trim() : '';
+  const sLookup = SAMPLER_LOOKUP[samplerText];
+  const scheduler = sLookup?.scheduler_override ?? SCHEDULER_LOOKUP[schedulerText] ?? schedulerText;
+  const samplerName = sLookup?.sampler_name ?? samplerText;
+  return { sampler_name: samplerName || 'euler', scheduler: scheduler || 'normal' };
 }
 
 /**

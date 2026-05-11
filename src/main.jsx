@@ -6,6 +6,7 @@ import { VariantPersonalQueue, VariantPersonalFeed } from './screens/QueueAndFee
 import { VariantPersonalInpaint } from './screens/Inpaint.jsx';
 import { OnboardingFlow } from './screens/Onboarding.jsx';
 import { usePersisted } from './shared/usePersisted.js';
+import { SAMPLER_LOOKUP, SCHEDULER_LOOKUP } from './services/samplerMap.js';
 import './styles.css';
 
 const screens = [
@@ -23,26 +24,15 @@ const DEFAULT_MODEL = {
 };
 
 
-const SAMPLER_DISPLAY_BY_INTERNAL = {
-  euler_ancestral: 'Euler a',
-  euler: 'Euler',
-  heun: 'Heun',
-  lcm: 'LCM',
-  dpmpp_2m: 'DPM++ 2M',
-  dpmpp_sde: 'DPM++ SDE',
-  ddim: 'DDIM',
-  uni_pc: 'UniPC',
-};
+const SAMPLER_DISPLAY_BY_INTERNAL = Object.fromEntries(
+  Object.entries(SAMPLER_LOOKUP)
+    .filter(([, value]) => !value.scheduler_override)
+    .map(([display, value]) => [value.sampler_name, display]),
+);
 
-const SCHEDULER_DISPLAY_BY_INTERNAL = {
-  normal: 'Normal',
-  karras: 'Karras',
-  exponential: 'Exponential',
-  sgm_uniform: 'SGM Uniform',
-  simple: 'Simple',
-  ddim_uniform: 'DDIM Uniform',
-  beta: 'Beta',
-};
+const SCHEDULER_DISPLAY_BY_INTERNAL = Object.fromEntries(
+  Object.entries(SCHEDULER_LOOKUP).map(([display, internal]) => [internal, display]),
+);
 
 function finiteNumber(value) {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
@@ -130,18 +120,24 @@ function App() {
     if (typeof payload.prompt === 'string') setPrompt(payload.prompt);
     if (typeof payload.negPrompt === 'string') setNegativePrompt(payload.negPrompt);
 
-    const loraNames = Array.isArray(payload.loraNames)
-      ? payload.loraNames
-      : Array.isArray(payload.resourceNames)
-        ? payload.resourceNames
-        : [];
-    if (loraNames.length > 0) {
-      setLoras(loraNames.map((name, index) => ({
-        id: `remix-lora-${index}-${name}`,
-        name: filenameLabel(name) || name,
-        filename: name,
-        strength: 0.8,
-      })));
+    const remixLoras = Array.isArray(payload.loras)
+      ? payload.loras
+      : Array.isArray(payload.loraNames)
+        ? payload.loraNames.map(name => ({ name }))
+        : Array.isArray(payload.resourceNames)
+          ? payload.resourceNames.map(name => ({ name }))
+          : null;
+    if (remixLoras) {
+      setLoras(remixLoras.map((lora, index) => {
+        const filename = typeof lora === 'string' ? lora : lora?.filename ?? lora?.name ?? '';
+        const strength = finiteNumber(lora?.strength) ?? finiteNumber(lora?.strengthModel) ?? 0.8;
+        return {
+          id: `remix-lora-${index}-${filename}`,
+          name: filenameLabel(filename) || filename,
+          filename,
+          strength,
+        };
+      }));
     }
 
     const nextSettings = {};
@@ -172,6 +168,9 @@ function App() {
     const s = pendingSeed;
     setPendingSeed(null);
     return s;
+  };
+  const consumePendingRemix = () => {
+    setPendingRemix(null);
   };
   const sendToInpaint = ({ seed, palette }) => {
     setInpaintSource({ seed, palette });
@@ -224,6 +223,7 @@ function App() {
           onSettingsChange={updateSettings}
           pendingRemix={pendingRemix}
           consumePendingSeed={consumePendingSeed}
+          consumePendingRemix={consumePendingRemix}
         />
       )}
       {screen === 'clock' && (
