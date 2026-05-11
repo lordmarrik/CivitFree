@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { listHistory, listQueue } from '../services/comfyClient.js';
 import { parseHistory, parseQueue, mergeQueueAndHistory } from '../services/historyParser.js';
 
@@ -16,13 +16,13 @@ export function useComfyHistory(baseUrl, { enabled = true, intervalMs = 4000 } =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [reloadTick, setReloadTick] = useState(0);
-  const [hasFetched, setHasFetched] = useState(false);
+  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
     if (!enabled || !baseUrl) return;
     let cancelled = false;
     let timeoutId = null;
-    let firstAttempt = !hasFetched;
+    let firstAttempt = !hasFetchedRef.current;
 
     const tick = async () => {
       if (firstAttempt) setLoading(true);
@@ -39,7 +39,7 @@ export function useComfyHistory(baseUrl, { enabled = true, intervalMs = 4000 } =
         const historyRuns = parseHistory(historyMap);
         setRuns(mergeQueueAndHistory(queueRuns, historyRuns));
         setError(null);
-        setHasFetched(true);
+        hasFetchedRef.current = true;
       } catch (err) {
         if (cancelled) return;
         setError(err);

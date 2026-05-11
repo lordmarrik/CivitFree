@@ -199,43 +199,6 @@ function PickerTabs({ tabs, active, onChange }) {
   );
 }
 
-function PickerCategories({ categories, active, onChange }) {
-  return (
-    <div style={{display:'flex', gap: 5, padding:'8px 14px', overflowX:'auto', flexShrink:0}}>
-      {categories.map(c => (
-        <button key={c} onClick={() => onChange(c)} style={{
-          padding:'6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, whiteSpace:'nowrap',
-          background: active === c ? 'var(--panel-3)' : 'var(--panel-2)',
-          color: active === c ? 'var(--text)' : 'var(--text-dim)',
-          border: `1px solid ${active === c ? 'var(--line)' : 'transparent'}`,
-        }}>{c}</button>
-      ))}
-    </div>
-  );
-}
-
-function PickerSortRow() {
-  return (
-    <div style={{
-      display:'flex', alignItems:'center', justifyContent:'center', gap: 16,
-      padding:'8px 14px', flexShrink:0,
-    }}>
-      <button style={{display:'flex', alignItems:'center', gap: 6, fontSize:13, color:'var(--text-dim)'}}>
-        <Ic.SortDesc size={14}/> Relevance <Ic.ChevDown size={11}/>
-      </button>
-      <button style={{
-        display:'flex', alignItems:'center', gap: 6, fontSize:13, color:'var(--text-dim)',
-        padding:'6px 14px', borderRadius: 8, background:'var(--panel-2)', border:'1px solid var(--line)',
-      }}>
-        <Ic.Filter size={12}/> Filters <Ic.ChevDown size={11}/>
-      </button>
-      <button style={{
-        width:32, height:32, borderRadius: 8, background:'var(--panel-2)', border:'1px solid var(--line)',
-        display:'flex', alignItems:'center', justifyContent:'center', color:'var(--text-dim)',
-      }}><Ic.Settings size={14}/></button>
-    </div>
-  );
-}
 
 export function ModelPicker({ open, onClose, onSelect, baseUrl, currentFilename }) {
   const [sourceTab, setSourceTab] = React.useState('local');

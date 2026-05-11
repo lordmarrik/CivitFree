@@ -1,4 +1,3 @@
-import React from 'react';
 import { Ic } from './icons.jsx';
 
 export function StatusBar({ time = '14:22' }) {

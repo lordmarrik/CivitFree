@@ -1,4 +1,3 @@
-import React from 'react';
 import { Ic } from '../shared/icons.jsx';
 
 export function BottomSheet({ open, onClose, title, children }) {

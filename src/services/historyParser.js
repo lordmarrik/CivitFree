@@ -228,7 +228,6 @@ export function parseQueue(queueData) {
 export function mergeQueueAndHistory(queueRuns, historyRuns) {
   const seen = new Set();
   const out = [];
-  const sections = ['running', 'queued', 'success'];
   const all = [...(queueRuns || []), ...(historyRuns || [])];
   // Stable sort: bucket by status group, then within each, newest-first.
   const grouped = { running: [], queued: [], rest: [] };

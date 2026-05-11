@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+/* eslint-disable react-refresh/only-export-components -- Entry file owns App and does not export refreshable components. */
+import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { VariantPersonalClassic } from './screens/Generation.jsx';
 import { VariantPersonalQueue, VariantPersonalFeed } from './screens/QueueAndFeed.jsx';
