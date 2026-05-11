@@ -1,6 +1,6 @@
 # Civitai GitHub reference audit
 
-This repo's mockup should use Civitai as a behavioral reference, but we should treat the upstream project as a source of product semantics rather than copy UI/source verbatim. Civitai behavior is a reference point, not a binding product spec; CivitFree can intentionally diverge where local ComfyUI use, mobile ergonomics, or the user's preferred generation workflow calls for different behavior.
+CivitFree Personal should use Civitai as a generator-behavior and product-semantics reference where the user wants parity, while keeping the custom CivitFree interface and local ComfyUI execution. Civitai is also the intended future catalog/download source for models and LoRAs. It is not a source to copy verbatim, not a reason to replace the CivitFree visual language, and not the generation backend.
 
 ## Sources checked
 
@@ -17,17 +17,18 @@ This repo's mockup should use Civitai as a behavioral reference, but we should t
 
 1. Civitai is a full Next.js + tRPC + Prisma + Postgres application with Mantine UI and Cloudflare storage. CivitFree should not attempt to mirror that architecture; its scope remains a local-first React + ComfyUI client.
 2. Upstream local development explicitly lists orchestration/generation as a service that does not work locally without external input. That means the GitHub repo explains UI behavior and data shapes, but it is not a drop-in local ComfyUI backend.
-3. Upstream generation is moving toward a graph/controller model. Controls render only when the active workflow/ecosystem exposes that graph node. For CivitFree, this translates to: show only controls we actually send to ComfyUI, or visibly disable/badge them. It does **not** mean CivitFree must copy upstream defaults, presets, ordering, or tuning choices.
-4. Upstream tracks resources used by generated images. Queue/feed cards in CivitFree should keep showing checkpoint, LoRA, strength, seed, dimensions, sampler, and source prompt metadata rather than just image URLs.
+3. Upstream generation is moving toward a graph/controller model. Controls render only when the active workflow/ecosystem exposes that graph node. For CivitFree, this translates to: show only controls we actually send to ComfyUI, or clearly mark them as future/unsupported.
+4. Civitai's generation state is model/resource aware: images track resources, metadata, and remixable parameters. CivitFree should preserve prompt, seed, checkpoint, LoRAs, sampler, scheduler, steps, CFG, size, and status whenever possible.
+5. Civitai's public API is useful for future remote model browsing/downloads, but it is not needed for the immediate local ComfyUI generation path.
 
-## Control-by-control mapping for CivitFree
+## Control / feature mapping
 
-| CivitFree area | Upstream behavior reference | What it means here |
+| Area | Civitai behavior | CivitFree implication |
 | --- | --- | --- |
-| Image / Video / Music top tabs | Upstream generation graph supports image, video, and audio workflows with workflow-specific controllers. | Keep Image active. Hide or badge Video/Music until CivitFree has real ComfyUI workflows for those modes. |
-| Text-to-image prompt | Prompt is a first-class graph controller; some ecosystems also expose prompt enhancement and trained words. | Current prompt field is valid. Prompt enhancement should be future work, not a fake button. |
-| Negative prompt | Upstream notes this is SD-only. | Keep for SD checkpoint workflows; if Flux/other ecosystems are added, conditionally hide or disable it. |
-| Model selector | Upstream treats checkpoint/model as the primary generation resource and changes compatible workflow/ecosystem behavior. | CivitFree's local checkpoint picker is conceptually correct. Next step is compatibility metadata, not a Civitai-style account model browser. |
+| Generator modes | Upstream renders controls per workflow/ecosystem and hides unsupported graph nodes. | CivitFree should disable/hide Video/Music/Image→Image/Inpaint/Upscale generation until each has a real ComfyUI workflow. |
+| Prompt | Upstream prompt is core state, sometimes with helper tools. | Current textarea is fine; ensure it is the exact prompt submitted to ComfyUI and preserved in history/remix. |
+| Negative prompt | Upstream supports negative prompt where workflow allows it. | Current negative prompt should remain wired to the negative CLIPTextEncode node and be carried through remix metadata. |
+| Model selector | Upstream model/resource selector is account/API/database-backed and resource-aware. | CivitFree local checkpoint picker is conceptually correct; next step is compatibility metadata, not a Civitai-style account model browser. |
 | LoRA / resources | Upstream additional resources are separate generation resources and are tracked on images. | Current local LoRA list should continue to feed the ComfyUI LoRA chain and history parser. Add base-model compatibility warnings before adding Civitai browsing. |
 | Output Settings: PNG | Upstream has an `outputFormat` controller. | CivitFree's PNG chip should either set SaveImage/output handling if ComfyUI supports alternate formats, or be disabled/badged. |
 | Output Settings: High | Upstream has priority/quality/pro/draft controls depending on workflow and membership/ecosystem. | Do not imply cloud priority. For local ComfyUI, map this to concrete steps/size presets or remove it. |
@@ -45,9 +46,33 @@ This repo's mockup should use Civitai as a behavioral reference, but we should t
 | Inpaint / image editing | Upstream image edit workflows are workflow-specific and can enable drawing/source-image inputs. | CivitFree's Screen D should be considered incomplete until it has a real mask/source-image workflow builder and drawing mask data. |
 | Sort / filters | Upstream uses process tags/resources/status data for filtering. | CivitFree should sort/filter local Comfy history by timestamp/status/model/resource once wired; otherwise label as coming soon. |
 
-
 ## Intentional divergence policy
 
+Use upstream Civitai to answer questions like "what is this control generally for?" and "what metadata should this action carry?" Do **not** use it to lock in CivitFree's final tuning model. CFG, steps, samplers, schedulers, quality presets, default values, and model-family guidance are all allowed to differ later.
+
+When implementing a control, prefer this decision order:
+
+1. What does local ComfyUI actually support for the selected workflow?
+2. What behavior makes sense for a single-user, mobile-first app?
+3. What defaults/presets does the user want for their models and hardware?
+4. What does Civitai do for the same concept?
+
+"Civitai does it this way" is useful context, but it should not override the first three questions.
+
+## Product direction after this audit
+
+Before adding features, make CivitFree follow the upstream rule: **a control should appear enabled only when it is backed by real workflow data**.
+
+Recommended order:
+
+1. Wire Custom Seed and real Sampler selection because these are core reproducibility controls and CivitFree already has ComfyUI workflow inputs for them; do not assume Civitai's exact presets/defaults are the desired long-term UX.
+2. Disable or badge Output Format, High, VAE, Video, Music, Sort, Filter, and Inpaint actions until they are real.
+3. Keep Queue/Feed metadata-rich and make remix transfer all relevant generation parameters.
+4. Plan Civitai browsing/API integration as the catalog/download layer once the local generation loop, download behavior, and storage expectations are stable. The public REST API is useful for model metadata and downloads, but CivitFree's generation backend remains local ComfyUI.
+
+## Legal/design note
+
+Civitai is Apache-2.0, but the goal is selected experience parity rather than wholesale source/UI copying. Prefer using upstream for feature semantics, state behavior, terminology, and metadata expectations while keeping CivitFree's visual language and local-first architecture distinct.
 Use upstream Civitai to answer questions like "what is this control generally for?" and "what metadata should this action carry?" Do **not** use it to lock in CivitFree's final tuning model. CFG, steps, samplers, schedulers, quality presets, default values, and model-family guidance are all allowed to differ later.
 
 When implementing a control, prefer this decision order:
