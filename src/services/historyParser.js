@@ -16,6 +16,7 @@
  * @property {string} status           - 'success' | 'error' | 'running' | 'queued'
  * @property {string} prompt
  * @property {string} negPrompt
+ * @property {string} checkpoint
  * @property {string} sampler
  * @property {string} scheduler
  * @property {number} cfg
@@ -44,6 +45,11 @@ const resolveTextNode = (graph, ref) => {
   const node = graph?.[id];
   if (!node || node.class_type !== 'CLIPTextEncode') return '';
   return node.inputs?.text ?? '';
+};
+
+const findCheckpoint = (graph) => {
+  const ckpt = findNode(graph, (n) => n?.inputs?.ckpt_name);
+  return ckpt?.[1]?.inputs?.ckpt_name ?? '';
 };
 
 const collectLoras = (graph) => {
@@ -117,6 +123,7 @@ export function parseHistoryEntry(promptId, entry) {
 
   const images = collectImages(outputs);
   const loraNames = collectLoras(workflow);
+  const checkpoint = findCheckpoint(workflow);
 
   let runStatus = 'queued';
   if (status?.completed) runStatus = status.status_str === 'error' ? 'error' : 'success';
@@ -129,6 +136,7 @@ export function parseHistoryEntry(promptId, entry) {
     status: runStatus,
     prompt: prompt || '',
     negPrompt: negPrompt || '',
+    checkpoint,
     sampler: ksInputs.sampler_name ?? '',
     scheduler: ksInputs.scheduler ?? '',
     cfg: typeof ksInputs.cfg === 'number' ? ksInputs.cfg : 0,
@@ -181,6 +189,7 @@ export function parseQueueEntry(arr, status) {
     status,
     prompt: resolveTextNode(workflow, ksInputs.positive) || '',
     negPrompt: resolveTextNode(workflow, ksInputs.negative) || '',
+    checkpoint: findCheckpoint(workflow),
     sampler: ksInputs.sampler_name ?? '',
     scheduler: ksInputs.scheduler ?? '',
     cfg: typeof ksInputs.cfg === 'number' ? ksInputs.cfg : 0,

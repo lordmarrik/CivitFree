@@ -29,7 +29,7 @@ export function VariantPersonalClassic({
   onModelChange,
   settings,
   onSettingsChange,
-  pendingSeed,
+  pendingRemix,
   consumePendingSeed,
 }) {
   const [modality, setModality] = React.useState('image');
@@ -66,11 +66,18 @@ export function VariantPersonalClassic({
   const [genError, setGenError] = React.useState(null);
 
   React.useEffect(() => {
-    if (typeof pendingSeed === 'number' && Number.isFinite(pendingSeed)) {
+    if (!pendingRemix) return;
+    setTab('t2i');
+    setSoonNote(null);
+    setModality('image');
+    if (typeof pendingRemix.seed === 'number' && Number.isFinite(pendingRemix.seed)) {
       setSeedMode('Custom');
-      setSeedInput(String(pendingSeed));
+      setSeedInput(String(pendingRemix.seed));
+    } else {
+      setSeedMode('Random');
+      setSeedInput('');
     }
-  }, [pendingSeed]);
+  }, [pendingRemix]);
 
   const markSoon = (label) => {
     setSoonNote(`${label} is coming soon. Text→Image is the only wired workflow right now.`);

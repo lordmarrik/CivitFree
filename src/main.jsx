@@ -21,6 +21,50 @@ const DEFAULT_MODEL = {
   base: 'SDXL',
 };
 
+
+const SAMPLER_DISPLAY_BY_INTERNAL = {
+  euler_ancestral: 'Euler a',
+  euler: 'Euler',
+  heun: 'Heun',
+  lcm: 'LCM',
+  dpmpp_2m: 'DPM++ 2M',
+  dpmpp_sde: 'DPM++ SDE',
+  ddim: 'DDIM',
+  uni_pc: 'UniPC',
+};
+
+const SCHEDULER_DISPLAY_BY_INTERNAL = {
+  normal: 'Normal',
+  karras: 'Karras',
+  exponential: 'Exponential',
+  sgm_uniform: 'SGM Uniform',
+  simple: 'Simple',
+  ddim_uniform: 'DDIM Uniform',
+  beta: 'Beta',
+};
+
+function finiteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function displaySampler(sampler, scheduler) {
+  if (sampler === 'dpmpp_2m' && scheduler === 'karras') return 'DPM++ 2M Karras';
+  return SAMPLER_DISPLAY_BY_INTERNAL[sampler] || sampler;
+}
+
+function displayScheduler(scheduler) {
+  return SCHEDULER_DISPLAY_BY_INTERNAL[scheduler] || scheduler;
+}
+
+function filenameLabel(filename) {
+  return String(filename || '')
+    .split(/[\\/]/)
+    .pop()
+    .replace(/\.(safetensors|ckpt|pt)$/i, '')
+    .replace(/[_-]+/g, ' ')
+    .trim();
+}
+
 const DEFAULT_SETTINGS = {
   backendProfile: 'steubenville',
   backendUrl: 'http://192.168.1.42:8188',
@@ -48,6 +92,7 @@ function App() {
   const [model, setModel] = usePersisted('model', DEFAULT_MODEL);
   const [settings, setSettings] = usePersisted('settings', DEFAULT_SETTINGS);
   const [pendingSeed, setPendingSeed] = useState(null);
+  const [pendingRemix, setPendingRemix] = useState(null);
 
   const handleTab = (key) => {
     if (key === 'brush' || key === 'clock' || key === 'grid') setScreen(key);
@@ -80,9 +125,46 @@ function App() {
     }
   };
 
-  const remix = ({ prompt: p, seed } = {}) => {
-    if (p) setPrompt(p);
-    setPendingSeed(typeof seed === 'number' ? seed : null);
+  const remix = (payload = {}) => {
+    if (typeof payload.prompt === 'string') setPrompt(payload.prompt);
+    if (typeof payload.negPrompt === 'string') setNegativePrompt(payload.negPrompt);
+
+    const loraNames = Array.isArray(payload.loraNames)
+      ? payload.loraNames
+      : Array.isArray(payload.resourceNames)
+        ? payload.resourceNames
+        : [];
+    if (loraNames.length > 0) {
+      setLoras(loraNames.map((name, index) => ({
+        id: `remix-lora-${index}-${name}`,
+        name: filenameLabel(name) || name,
+        filename: name,
+        strength: 0.8,
+      })));
+    }
+
+    const nextSettings = {};
+    if (payload.checkpoint) nextSettings.checkpointFilename = payload.checkpoint;
+    if (payload.sampler) nextSettings.sampler = displaySampler(payload.sampler, payload.scheduler);
+    if (payload.scheduler) nextSettings.scheduler = displayScheduler(payload.scheduler);
+    if (finiteNumber(payload.cfg) !== undefined && payload.cfg > 0) nextSettings.cfg = payload.cfg;
+    if (finiteNumber(payload.steps) !== undefined && payload.steps > 0) nextSettings.steps = payload.steps;
+    if (finiteNumber(payload.width) !== undefined && payload.width > 0 && finiteNumber(payload.height) !== undefined && payload.height > 0) {
+      nextSettings.size = `${payload.width}×${payload.height}`;
+    }
+    if (Object.keys(nextSettings).length > 0) updateSettings(nextSettings);
+
+    if (payload.checkpoint) {
+      setModel(prev => ({
+        ...(prev || DEFAULT_MODEL),
+        name: filenameLabel(payload.checkpoint) || payload.checkpoint,
+        filename: payload.checkpoint,
+      }));
+    }
+
+    const remixSeed = finiteNumber(payload.seed);
+    setPendingSeed(remixSeed ?? null);
+    setPendingRemix({ ...payload, seed: remixSeed, nonce: Date.now() });
     setScreen('brush');
   };
   const consumePendingSeed = () => {
@@ -139,7 +221,7 @@ function App() {
           onModelChange={updateModel}
           settings={settings}
           onSettingsChange={updateSettings}
-          pendingSeed={pendingSeed}
+          pendingRemix={pendingRemix}
           consumePendingSeed={consumePendingSeed}
         />
       )}

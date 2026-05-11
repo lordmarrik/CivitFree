@@ -38,9 +38,14 @@ export function SheetItem({ icon, label, danger, soon, onClick }) {
   );
 }
 
-export function ImageActionSheet({ open, onClose, seed, palette, prompt, onInpaint, onRemix, onDownload }) {
+export function ImageActionSheet({ open, onClose, seed, palette, prompt, remixPayload, onInpaint, onRemix, onDownload }) {
   const fireRemix = (withSeed) => {
-    if (onRemix) onRemix({ prompt, seed: withSeed ? seed : undefined, palette });
+    if (onRemix) {
+      const payload = { ...(remixPayload || {}), prompt: remixPayload?.prompt ?? prompt, palette };
+      if (withSeed && typeof seed === 'number' && Number.isFinite(seed)) payload.seed = seed;
+      else delete payload.seed;
+      onRemix(payload);
+    }
     onClose && onClose();
   };
   const fireInpaint = () => {
@@ -52,7 +57,7 @@ export function ImageActionSheet({ open, onClose, seed, palette, prompt, onInpai
     onClose && onClose();
   };
   return (
-    <BottomSheet open={open} onClose={onClose} title={seed ? `#${seed}` : 'Actions'}>
+    <BottomSheet open={open} onClose={onClose} title={typeof seed === 'number' && Number.isFinite(seed) ? `#${seed}` : 'Actions'}>
       <SheetSection label="Remix">
         <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix" onClick={() => fireRemix(false)}/>
         <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix (with seed)" onClick={() => fireRemix(true)}/>
