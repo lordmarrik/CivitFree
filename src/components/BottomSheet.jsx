@@ -38,13 +38,17 @@ export function SheetItem({ icon, label, danger, soon, onClick }) {
   );
 }
 
-export function ImageActionSheet({ open, onClose, seed, palette, prompt, onInpaint, onRemix }) {
+export function ImageActionSheet({ open, onClose, seed, palette, prompt, onInpaint, onRemix, onDownload }) {
   const fireRemix = (withSeed) => {
     if (onRemix) onRemix({ prompt, seed: withSeed ? seed : undefined, palette });
     onClose && onClose();
   };
   const fireInpaint = () => {
     if (onInpaint) onInpaint({ seed, palette });
+    onClose && onClose();
+  };
+  const fireDownload = () => {
+    if (onDownload) onDownload();
     onClose && onClose();
   };
   return (
@@ -65,7 +69,7 @@ export function ImageActionSheet({ open, onClose, seed, palette, prompt, onInpai
         <SheetItem icon={<Ic.Video size={16}/>} label="Image to Video" soon onClick={onClose}/>
       </SheetSection>
       <SheetSection>
-        <SheetItem icon={<Ic.Download size={16}/>} label="Download" soon onClick={onClose}/>
+        <SheetItem icon={<Ic.Download size={16}/>} label="Download" onClick={fireDownload}/>
         <SheetItem icon={<Ic.Trash size={16}/>} label="Delete" danger soon onClick={onClose}/>
       </SheetSection>
     </BottomSheet>
