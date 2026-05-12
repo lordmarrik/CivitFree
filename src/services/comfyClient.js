@@ -84,7 +84,7 @@ async function callJson(url, init) {
   }
   if (!res.ok) {
     let body = '';
-    try { body = await res.text(); } catch {}
+    try { body = await res.text(); } catch { /* Ignore unreadable error body. */ }
     throw new ComfyError(
       `ComfyUI returned ${res.status} ${res.statusText} for ${url}` +
       (body ? `: ${body.slice(0, 200)}` : ''),
@@ -210,7 +210,6 @@ export function imageUrl(baseUrl, { filename, type = 'output', subfolder = '' } 
  */
 export async function waitForResult(baseUrl, promptId, { intervalMs = 1500, timeoutMs = 5 * 60 * 1000, signal } = {}) {
   const start = Date.now();
-  /* eslint-disable no-constant-condition */
   while (true) {
     if (signal?.aborted) throw new ComfyError('Generation cancelled.');
     const entry = await pollHistory(baseUrl, promptId);
@@ -220,7 +219,6 @@ export async function waitForResult(baseUrl, promptId, { intervalMs = 1500, time
     }
     await new Promise(r => setTimeout(r, intervalMs));
   }
-  /* eslint-enable */
 }
 
 /**

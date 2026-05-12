@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+/* eslint-disable react-refresh/only-export-components -- Entry file owns App and does not export refreshable components. */
+import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { VariantPersonalClassic } from './screens/Generation.jsx';
 import { VariantPersonalQueue, VariantPersonalFeed } from './screens/QueueAndFeed.jsx';
 import { VariantPersonalInpaint } from './screens/Inpaint.jsx';
 import { OnboardingFlow } from './screens/Onboarding.jsx';
 import { usePersisted } from './shared/usePersisted.js';
+import { SAMPLER_LOOKUP, SCHEDULER_LOOKUP } from './services/samplerMap.js';
 import './styles.css';
 
 const screens = [
@@ -20,6 +22,39 @@ const DEFAULT_MODEL = {
   size: '6.4 GB',
   base: 'SDXL',
 };
+
+
+const SAMPLER_DISPLAY_BY_INTERNAL = Object.fromEntries(
+  Object.entries(SAMPLER_LOOKUP)
+    .filter(([, value]) => !value.scheduler_override)
+    .map(([display, value]) => [value.sampler_name, display]),
+);
+
+const SCHEDULER_DISPLAY_BY_INTERNAL = Object.fromEntries(
+  Object.entries(SCHEDULER_LOOKUP).map(([display, internal]) => [internal, display]),
+);
+
+function finiteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function displaySampler(sampler, scheduler) {
+  if (sampler === 'dpmpp_2m' && scheduler === 'karras') return 'DPM++ 2M Karras';
+  return SAMPLER_DISPLAY_BY_INTERNAL[sampler] || sampler;
+}
+
+function displayScheduler(scheduler) {
+  return SCHEDULER_DISPLAY_BY_INTERNAL[scheduler] || scheduler;
+}
+
+function filenameLabel(filename) {
+  return String(filename || '')
+    .split(/[\\/]/)
+    .pop()
+    .replace(/\.(safetensors|ckpt|pt)$/i, '')
+    .replace(/[_-]+/g, ' ')
+    .trim();
+}
 
 const DEFAULT_SETTINGS = {
   backendProfile: 'steubenville',
@@ -48,6 +83,7 @@ function App() {
   const [model, setModel] = usePersisted('model', DEFAULT_MODEL);
   const [settings, setSettings] = usePersisted('settings', DEFAULT_SETTINGS);
   const [pendingSeed, setPendingSeed] = useState(null);
+  const [pendingRemix, setPendingRemix] = useState(null);
 
   const handleTab = (key) => {
     if (key === 'brush' || key === 'clock' || key === 'grid') setScreen(key);
@@ -80,15 +116,61 @@ function App() {
     }
   };
 
-  const remix = ({ prompt: p, seed } = {}) => {
-    if (p) setPrompt(p);
-    setPendingSeed(typeof seed === 'number' ? seed : null);
+  const remix = (payload = {}) => {
+    if (typeof payload.prompt === 'string') setPrompt(payload.prompt);
+    if (typeof payload.negPrompt === 'string') setNegativePrompt(payload.negPrompt);
+
+    const remixLoras = Array.isArray(payload.loras)
+      ? payload.loras
+      : Array.isArray(payload.loraNames)
+        ? payload.loraNames.map(name => ({ name }))
+        : Array.isArray(payload.resourceNames)
+          ? payload.resourceNames.map(name => ({ name }))
+          : null;
+    if (remixLoras) {
+      setLoras(remixLoras.map((lora, index) => {
+        const filename = typeof lora === 'string' ? lora : lora?.filename ?? lora?.name ?? '';
+        const strength = finiteNumber(lora?.strength) ?? finiteNumber(lora?.strengthModel) ?? 0.8;
+        return {
+          id: `remix-lora-${index}-${filename}`,
+          name: filenameLabel(filename) || filename,
+          filename,
+          strength,
+        };
+      }));
+    }
+
+    const nextSettings = {};
+    if (payload.checkpoint) nextSettings.checkpointFilename = payload.checkpoint;
+    if (payload.sampler) nextSettings.sampler = displaySampler(payload.sampler, payload.scheduler);
+    if (payload.scheduler) nextSettings.scheduler = displayScheduler(payload.scheduler);
+    if (finiteNumber(payload.cfg) !== undefined && payload.cfg > 0) nextSettings.cfg = payload.cfg;
+    if (finiteNumber(payload.steps) !== undefined && payload.steps > 0) nextSettings.steps = payload.steps;
+    if (finiteNumber(payload.width) !== undefined && payload.width > 0 && finiteNumber(payload.height) !== undefined && payload.height > 0) {
+      nextSettings.size = `${payload.width}×${payload.height}`;
+    }
+    if (Object.keys(nextSettings).length > 0) updateSettings(nextSettings);
+
+    if (payload.checkpoint) {
+      setModel(prev => ({
+        ...(prev || DEFAULT_MODEL),
+        name: filenameLabel(payload.checkpoint) || payload.checkpoint,
+        filename: payload.checkpoint,
+      }));
+    }
+
+    const remixSeed = finiteNumber(payload.seed);
+    setPendingSeed(remixSeed ?? null);
+    setPendingRemix({ ...payload, seed: remixSeed, nonce: Date.now() });
     setScreen('brush');
   };
   const consumePendingSeed = () => {
     const s = pendingSeed;
     setPendingSeed(null);
     return s;
+  };
+  const consumePendingRemix = () => {
+    setPendingRemix(null);
   };
   const sendToInpaint = ({ seed, palette }) => {
     setInpaintSource({ seed, palette });
@@ -139,8 +221,9 @@ function App() {
           onModelChange={updateModel}
           settings={settings}
           onSettingsChange={updateSettings}
-          pendingSeed={pendingSeed}
+          pendingRemix={pendingRemix}
           consumePendingSeed={consumePendingSeed}
+          consumePendingRemix={consumePendingRemix}
         />
       )}
       {screen === 'clock' && (

@@ -1,5 +1,4 @@
-import React from 'react';
-
+/* eslint-disable react-refresh/only-export-components -- Mock image palettes and FakeImg intentionally share a module. */
 export const PALETTES = [
   ['#1d2240','#3a2563','#7d3a8a','#d65a8a'],
   ['#0f1f29','#244a3f','#5e8a4f','#c8c266'],

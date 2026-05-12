@@ -16,6 +16,7 @@
  * @property {string} status           - 'success' | 'error' | 'running' | 'queued'
  * @property {string} prompt
  * @property {string} negPrompt
+ * @property {string} checkpoint
  * @property {string} sampler
  * @property {string} scheduler
  * @property {number} cfg
@@ -25,6 +26,7 @@
  * @property {number} height
  * @property {Array<{filename:string,type:string,subfolder:string,nodeId:string}>} images
  * @property {string[]} loraNames      - filenames of any LoRAs in the chain
+ * @property {Array<{name:string,strength?:number,clipStrength?:number}>} loras
  */
 
 const findNode = (graph, predicate) => {
@@ -46,13 +48,40 @@ const resolveTextNode = (graph, ref) => {
   return node.inputs?.text ?? '';
 };
 
+const resolveCheckpointFromModel = (graph, ref, seen = new Set()) => {
+  if (!Array.isArray(ref)) return '';
+  const [id] = ref;
+  if (seen.has(id)) return '';
+  seen.add(id);
+  const node = graph?.[id];
+  if (!node) return '';
+  if (node.inputs?.ckpt_name) return node.inputs.ckpt_name;
+  if (node.class_type === 'LoraLoader') {
+    return resolveCheckpointFromModel(graph, node.inputs?.model, seen);
+  }
+  return '';
+};
+
+const findCheckpoint = (graph, modelRef) => {
+  const traced = resolveCheckpointFromModel(graph, modelRef);
+  if (traced) return traced;
+  const ckpt = findNode(graph, (n) => n?.inputs?.ckpt_name);
+  return ckpt?.[1]?.inputs?.ckpt_name ?? '';
+};
+
 const collectLoras = (graph) => {
   const out = [];
   if (!graph) return out;
   for (const node of Object.values(graph)) {
     if (node?.class_type === 'LoraLoader') {
       const name = node.inputs?.lora_name;
-      if (name) out.push(name);
+      if (name) {
+        out.push({
+          name,
+          strength: typeof node.inputs?.strength_model === 'number' ? node.inputs.strength_model : undefined,
+          clipStrength: typeof node.inputs?.strength_clip === 'number' ? node.inputs.strength_clip : undefined,
+        });
+      }
     }
   }
   return out;
@@ -116,7 +145,9 @@ export function parseHistoryEntry(promptId, entry) {
   const negPrompt = resolveTextNode(workflow, ksInputs.negative);
 
   const images = collectImages(outputs);
-  const loraNames = collectLoras(workflow);
+  const loras = collectLoras(workflow);
+  const loraNames = loras.map(lora => lora.name);
+  const checkpoint = findCheckpoint(workflow, ksInputs.model);
 
   let runStatus = 'queued';
   if (status?.completed) runStatus = status.status_str === 'error' ? 'error' : 'success';
@@ -129,6 +160,7 @@ export function parseHistoryEntry(promptId, entry) {
     status: runStatus,
     prompt: prompt || '',
     negPrompt: negPrompt || '',
+    checkpoint,
     sampler: ksInputs.sampler_name ?? '',
     scheduler: ksInputs.scheduler ?? '',
     cfg: typeof ksInputs.cfg === 'number' ? ksInputs.cfg : 0,
@@ -138,6 +170,7 @@ export function parseHistoryEntry(promptId, entry) {
     height: typeof emptyInputs.height === 'number' ? emptyInputs.height : 0,
     images,
     loraNames,
+    loras,
   };
 }
 
@@ -181,6 +214,7 @@ export function parseQueueEntry(arr, status) {
     status,
     prompt: resolveTextNode(workflow, ksInputs.positive) || '',
     negPrompt: resolveTextNode(workflow, ksInputs.negative) || '',
+    checkpoint: findCheckpoint(workflow, ksInputs.model),
     sampler: ksInputs.sampler_name ?? '',
     scheduler: ksInputs.scheduler ?? '',
     cfg: typeof ksInputs.cfg === 'number' ? ksInputs.cfg : 0,
@@ -189,7 +223,8 @@ export function parseQueueEntry(arr, status) {
     width: typeof emptyInputs.width === 'number' ? emptyInputs.width : 0,
     height: typeof emptyInputs.height === 'number' ? emptyInputs.height : 0,
     images: [],
-    loraNames: collectLoras(workflow),
+    loraNames: collectLoras(workflow).map(lora => lora.name),
+    loras: collectLoras(workflow),
   };
 }
 
@@ -219,7 +254,6 @@ export function parseQueue(queueData) {
 export function mergeQueueAndHistory(queueRuns, historyRuns) {
   const seen = new Set();
   const out = [];
-  const sections = ['running', 'queued', 'success'];
   const all = [...(queueRuns || []), ...(historyRuns || [])];
   // Stable sort: bucket by status group, then within each, newest-first.
   const grouped = { running: [], queued: [], rest: [] };
