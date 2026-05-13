@@ -198,10 +198,10 @@ export function VariantPersonalClassic({
               <button className={`mod-tab ${modality === 'image' ? 'active' : ''}`} onClick={() => setModality('image')}>
                 <Ic.Image size={18}/>
               </button>
-              <button className="mod-tab soon" onClick={() => markSoon('Video generation')} aria-label="Video generation coming soon">
+              <button className="mod-tab soon" disabled aria-label="Video generation coming soon">
                 <Ic.Video size={18}/><SoonBadge/>
               </button>
-              <button className="mod-tab soon" onClick={() => markSoon('Music generation')} aria-label="Music generation coming soon">
+              <button className="mod-tab soon" disabled aria-label="Music generation coming soon">
                 <Ic.Music size={18}/><SoonBadge/>
               </button>
             </div>
@@ -397,7 +397,7 @@ export function VariantPersonalClassic({
         <div className="cf-section">
           <SectionTitle>Output Settings</SectionTitle>
           <div className="cf-out-row">
-            <button className="cf-out-chip soon"><Ic.Image size={14}/> PNG <SoonBadge/></button>
+            <button className="cf-out-chip soon" disabled><Ic.Image size={14}/> PNG <SoonBadge/></button>
           </div>
         </div>
 
