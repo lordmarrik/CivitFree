@@ -76,3 +76,5 @@ CivitFree is personal-only: a local-first mobile UI for a user's own image gener
 - `controls.jsx` — shared form controls
 - `bottom-sheet.jsx` — action menu overlay
 - `_archive/legacy-nonpersonal/` — archived old non-personal demo; backup/reference only, not active
+
+External code review of this codebase: see CIVITFREE_REVIEW.md (root). Read it before changing code.
