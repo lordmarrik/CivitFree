@@ -10,6 +10,7 @@ import { BackendSwitcher } from '../components/SortFilter.jsx';
 import { submitWorkflow, waitForResult } from '../services/comfyClient.js';
 import { buildTextToImageWorkflow, randomSeed } from '../services/buildWorkflow.js';
 import { SAMPLER_OPTIONS } from '../services/samplerMap.js';
+import { usePersisted } from '../shared/usePersisted.js';
 
 function SoonBadge() {
   return <span className="cf-soon-badge">soon</span>;
@@ -35,10 +36,10 @@ export function VariantPersonalClassic({
 }) {
   const [modality, setModality] = React.useState('image');
   const [tab, setTab] = React.useState('t2i');
-  const [seedMode, setSeedMode] = React.useState('Random');
-  const [seedInput, setSeedInput] = React.useState('');
+  const [seedMode, setSeedMode] = usePersisted('seedMode', 'Random');
+  const [seedInput, setSeedInput] = usePersisted('seedInput', '');
   const [clip] = React.useState(2);
-  const [qty, setQty] = React.useState(2);
+  const [qty, setQty] = usePersisted('qty', 2);
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [modelPickerOpen, setModelPickerOpen] = React.useState(false);

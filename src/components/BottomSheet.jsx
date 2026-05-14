@@ -57,7 +57,7 @@ export function ImageActionSheet({ open, onClose, seed, palette, prompt, remixPa
     onClose && onClose();
   };
   return (
-    <BottomSheet open={open} onClose={onClose} title={typeof seed === 'number' && Number.isFinite(seed) ? `#${seed}` : 'Actions'}>
+    <BottomSheet open={open} onClose={onClose} title={typeof seed === 'number' && Number.isFinite(seed) ? `Seed #${seed}` : 'Actions'}>
       <SheetSection label="Remix">
         <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix" onClick={() => fireRemix(false)}/>
         <SheetItem icon={<Ic.Refresh size={16}/>} label="Remix (with seed)" onClick={() => fireRemix(true)}/>
