@@ -1,3 +1,4 @@
+import React from 'react';
 import { Ic } from '../shared/icons.jsx';
 import { BottomSheet, SheetSection } from './BottomSheet.jsx';
 

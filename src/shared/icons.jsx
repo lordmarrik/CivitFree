@@ -1,3 +1,4 @@
+import React from 'react';
 
 export const Ic = {
   Trophy: ({size=18, color='currentColor'}) => (
