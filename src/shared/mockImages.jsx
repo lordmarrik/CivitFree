@@ -13,14 +13,19 @@ export const PALETTES = [
 ];
 
 export function FakeImg({ palette, seed }) {
-  const p = PALETTES[palette % PALETTES.length];
-  const a = (seed * 13) % 360;
-  const b = (seed * 47) % 360;
+  // Defensive against undefined/NaN inputs — remix builds LoRA objects
+  // without palette/seed, and PALETTES[NaN] would surface as p[3] on
+  // undefined and crash the whole render tree.
+  const safePalette = Number.isFinite(palette) ? Math.abs(Math.trunc(palette)) : 0;
+  const safeSeed = Number.isFinite(seed) ? seed : 0;
+  const p = PALETTES[safePalette % PALETTES.length];
+  const a = (safeSeed * 13) % 360;
+  const b = (safeSeed * 47) % 360;
   return (
     <div className="layer" style={{
       background: `
-        radial-gradient(ellipse at ${30 + (seed % 40)}% ${20 + (seed * 3 % 40)}%, ${p[3]} 0%, transparent 35%),
-        radial-gradient(ellipse at ${60 + (seed * 7 % 30)}% ${70 + (seed * 5 % 25)}%, ${p[2]} 0%, transparent 45%),
+        radial-gradient(ellipse at ${30 + (safeSeed % 40)}% ${20 + (safeSeed * 3 % 40)}%, ${p[3]} 0%, transparent 35%),
+        radial-gradient(ellipse at ${60 + (safeSeed * 7 % 30)}% ${70 + (safeSeed * 5 % 25)}%, ${p[2]} 0%, transparent 45%),
         linear-gradient(${a}deg, ${p[0]} 0%, ${p[1]} 100%)
       `,
     }}>
