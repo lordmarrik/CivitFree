@@ -64,15 +64,6 @@ CivitFree is personal-only: a local-first mobile UI for a user's own image gener
 ## Files
 
 - `CivitFree Personal.html` — canonical personal prototype canvas
-- `variant-personal-classic.jsx` — Screen A
-- `variant-personal-gallery.jsx` — Screens B and C
-- `variant-personal-inpaint.jsx` — Screen D
-- `drawer.jsx` — side drawer screens
-- `model-picker.jsx` — model and LoRA pickers
-- `sort-filter.jsx` — sort/filter/backend switcher sheets
-- `onboarding.jsx` — first-run flow
-- `shell.jsx` — shared chrome (StatusBar, TopBar, Dock)
-- `icons.jsx` — icon set
-- `controls.jsx` — shared form controls
-- `bottom-sheet.jsx` — action menu overlay
+- `src/` — active runnable app (screens, components, shared, services)
 - `_archive/legacy-nonpersonal/` — archived old non-personal demo; backup/reference only, not active
+- `_archive/mockups/` — archived loose mockup `.jsx` files that used to sit at repo root; reference only, not imported by `src/`
