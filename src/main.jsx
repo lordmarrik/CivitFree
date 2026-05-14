@@ -7,6 +7,7 @@ import { VariantPersonalInpaint } from './screens/Inpaint.jsx';
 import { OnboardingFlow } from './screens/Onboarding.jsx';
 import { usePersisted } from './shared/usePersisted.js';
 import { SAMPLER_LOOKUP, SCHEDULER_LOOKUP } from './services/samplerMap.js';
+import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import './styles.css';
 
 const screens = [
@@ -275,4 +276,8 @@ function App() {
   );
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+createRoot(document.getElementById('root')).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>,
+);
