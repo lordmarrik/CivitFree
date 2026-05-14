@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import React, { Component } from 'react';
 
 // Last-resort safety net for the whole app. Catches render-time errors
 // anywhere below it, logs them, and shows a recovery affordance instead
