@@ -58,9 +58,9 @@ function filenameLabel(filename) {
 }
 
 const DEFAULT_SETTINGS = {
-  backendProfile: 'steubenville',
-  backendUrl: 'http://192.168.1.42:8188',
-  defaultModelName: 'HomoSimile XL v4.0',
+  backendProfile: 'local',
+  backendUrl: '',
+  defaultModelName: '',
   checkpointFilename: '',
   sampler: 'Euler a',
   scheduler: 'Normal',
@@ -69,8 +69,8 @@ const DEFAULT_SETTINGS = {
   size: '832×1216',
   cloudGpuKey: '',
   civitaiKey: '',
-  pcSavePath: '/home/user/civitfree/outputs',
-  phoneSavePath: '/storage/emulated/0/CivitFree',
+  pcSavePath: '',
+  phoneSavePath: '',
 };
 
 function App() {
