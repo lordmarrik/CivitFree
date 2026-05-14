@@ -68,6 +68,45 @@ export function resolveSampler(samplerDisplay, schedulerDisplay) {
   return { sampler_name: samplerName || 'euler', scheduler: scheduler || 'normal' };
 }
 
+// Reverse maps used by the display helpers below. Built once at module
+// load — kept private so callers don't accidentally depend on the
+// internal indexing strategy.
+const SAMPLER_DISPLAY_BY_INTERNAL = Object.fromEntries(
+  Object.entries(SAMPLER_LOOKUP)
+    .filter(([, value]) => !value.scheduler_override)
+    .map(([display, value]) => [value.sampler_name, display]),
+);
+
+// Composite key "sampler_name|scheduler" -> display name, for entries
+// whose display string folds a scheduler into the sampler label
+// (e.g. "DPM++ 2M Karras" => dpmpp_2m + karras). Any future combos added
+// to SAMPLER_LOOKUP with a scheduler_override pick this up automatically.
+const SAMPLER_DISPLAY_BY_TUPLE = Object.fromEntries(
+  Object.entries(SAMPLER_LOOKUP)
+    .filter(([, value]) => value.scheduler_override)
+    .map(([display, value]) => [`${value.sampler_name}|${value.scheduler_override}`, display]),
+);
+
+const SCHEDULER_DISPLAY_BY_INTERNAL = Object.fromEntries(
+  Object.entries(SCHEDULER_LOOKUP).map(([display, internal]) => [internal, display]),
+);
+
+/**
+ * Reverse of resolveSampler: map ComfyUI internal sampler+scheduler back
+ * to the UI display label. Tuple matches (e.g. dpmpp_2m+karras ->
+ * "DPM++ 2M Karras") win over plain sampler-only matches.
+ */
+export function displaySampler(sampler, scheduler) {
+  const tupleMatch = SAMPLER_DISPLAY_BY_TUPLE[`${sampler}|${scheduler}`];
+  if (tupleMatch) return tupleMatch;
+  return SAMPLER_DISPLAY_BY_INTERNAL[sampler] || sampler;
+}
+
+/** Reverse of the scheduler lookup; falls back to the raw internal name. */
+export function displayScheduler(scheduler) {
+  return SCHEDULER_DISPLAY_BY_INTERNAL[scheduler] || scheduler;
+}
+
 /**
  * Parse a "832×1216" (or "832x1216") size string into { width, height }.
  * Falls back to 1024x1024 if the string doesn't parse.

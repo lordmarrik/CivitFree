@@ -6,7 +6,7 @@ import { VariantPersonalQueue, VariantPersonalFeed } from './screens/QueueAndFee
 import { VariantPersonalInpaint } from './screens/Inpaint.jsx';
 import { OnboardingFlow } from './screens/Onboarding.jsx';
 import { usePersisted } from './shared/usePersisted.js';
-import { SAMPLER_LOOKUP, SCHEDULER_LOOKUP } from './services/samplerMap.js';
+import { displaySampler, displayScheduler } from './services/samplerMap.js';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import './styles.css';
 
@@ -25,27 +25,8 @@ const DEFAULT_MODEL = {
 };
 
 
-const SAMPLER_DISPLAY_BY_INTERNAL = Object.fromEntries(
-  Object.entries(SAMPLER_LOOKUP)
-    .filter(([, value]) => !value.scheduler_override)
-    .map(([display, value]) => [value.sampler_name, display]),
-);
-
-const SCHEDULER_DISPLAY_BY_INTERNAL = Object.fromEntries(
-  Object.entries(SCHEDULER_LOOKUP).map(([display, internal]) => [internal, display]),
-);
-
 function finiteNumber(value) {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
-function displaySampler(sampler, scheduler) {
-  if (sampler === 'dpmpp_2m' && scheduler === 'karras') return 'DPM++ 2M Karras';
-  return SAMPLER_DISPLAY_BY_INTERNAL[sampler] || sampler;
-}
-
-function displayScheduler(scheduler) {
-  return SCHEDULER_DISPLAY_BY_INTERNAL[scheduler] || scheduler;
 }
 
 function filenameLabel(filename) {
