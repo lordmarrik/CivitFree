@@ -83,12 +83,11 @@ function ResultTile({ baseUrl, filename, type, subfolder, alt, onAction, favorit
   const meta = { filename, type, subfolder, url };
   return (
     <div className={`cf-feed-card ${favorite ? 'favorited' : ''} ${selected ? 'selected' : ''}`}>
-      <div className="img">
+      <div className={haveUrl ? 'img real' : 'img'}>
         {haveUrl ? (
           <img
             src={url}
             alt={alt || filename}
-            style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', background:'var(--panel-3)'}}
           />
         ) : (
           <FakeImg palette={paletteForFilename(filename || alt || 'x')} seed={seedHashForFilename(filename || alt || 'x')}/>

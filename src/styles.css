@@ -503,6 +503,14 @@ input, textarea, select { font: inherit; color: inherit; }
   background: var(--panel-3);
   overflow: hidden;
 }
+/* Real-image variant: let the image's natural dimensions size the card
+   so square / landscape outputs aren't center-cropped to portrait. */
+.cf-feed-card .img.real { aspect-ratio: auto; }
+.cf-feed-card .img.real img {
+  position: static; display: block;
+  width: 100%; height: auto;
+  background: var(--panel-3);
+}
 .cf-feed-card .check {
   position: absolute; top: 8px; left: 8px; z-index: 2;
   width: 18px; height: 18px; border-radius: 4px;
@@ -543,6 +551,10 @@ input, textarea, select { font: inherit; color: inherit; }
   border-bottom: 1px solid var(--line-soft);
   font-size: 13px;
   flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-canvas);
 }
 .cf-sort-row .item { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .cf-sort-row .item.muted { color: var(--text-dim); }
